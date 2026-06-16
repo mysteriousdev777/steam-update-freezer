@@ -94,5 +94,8 @@ out/
 #AI
 .claude
 
+# Project decision notes (kept local, not tracked)
+/docs/DECISIONS.md
+
 # IDE
 /.idea

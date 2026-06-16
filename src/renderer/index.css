@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+/* Steam-inspired palette, exposed as Tailwind theme tokens (e.g. bg-steam-bg, text-steam-accent). */
+@theme {
+  --color-steam-bg: #1b2838;
+  --color-steam-panel: #2a475e;
+  --color-steam-bar: #171a21;
+  --color-steam-accent: #66c0f4;
+  --color-steam-text: #c7d5e0;
+  --color-steam-muted: #8f98a0;
+  --color-steam-ok: #5ba32b;
+  --color-steam-warn: #ee2244;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    font-family: system-ui, Arial, sans-serif;
+    background-color: var(--color-steam-bg);
+    color: var(--color-steam-text);
+  }
+}
