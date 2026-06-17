@@ -10,6 +10,9 @@
   --color-steam-muted: #8f98a0;
   --color-steam-ok: #5ba32b;
   --color-steam-warn: #ee2244;
+  /* Muted action-button colors (softer than ok/warn). */
+  --color-block: #4f8a5e;
+  --color-unblock: #bd5d55;
 }
 
 @layer base {

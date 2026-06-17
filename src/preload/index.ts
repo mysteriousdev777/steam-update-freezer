@@ -6,6 +6,12 @@ import type { FreezerApi } from '../shared/api';
 
 const api: FreezerApi = {
   ping: () => ipcRenderer.invoke('ping'),
+  selectFolder: defaultPath => ipcRenderer.invoke('selectFolder', defaultPath),
+  getDefaultSteamapps: () => ipcRenderer.invoke('getDefaultSteamapps'),
+  readManifest: (steamappsPath, appId) => ipcRenderer.invoke('readManifest', steamappsPath, appId),
+  setManifestReadonly: (steamappsPath, appId, isReadonly) =>
+    ipcRenderer.invoke('setManifestReadonly', steamappsPath, appId, isReadonly),
+  confirm: options => ipcRenderer.invoke('confirm', options),
 };
 
 contextBridge.exposeInMainWorld('freezer', api);

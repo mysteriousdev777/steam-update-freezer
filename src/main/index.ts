@@ -14,15 +14,20 @@ if (started) {
 
 const createWindow = (): void => {
   const mainWindow = new BrowserWindow({
-    height: 720,
     width: 1024,
+    height: 720,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
   });
 
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-  mainWindow.webContents.openDevTools();
+
+  // In dev, open DevTools detached so they don't eat into the app's content area (the window
+  // then looks identical in dev and prod). Never in a packaged build.
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  }
 };
 
 // Register the main-process side of the preload bridge before any window loads.

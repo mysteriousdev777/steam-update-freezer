@@ -45,11 +45,21 @@ The maintainer manages git. **Do not run git commands** — `git status`, `git c
 `git add`, `git commit`, `git diff`, tracking checks, etc. — unless a task explicitly asks
 for git work. Create/edit files as the task needs and leave all git operations to the user.
 
+## Dependencies
+
+The maintainer installs dependencies. **Do not run** `pnpm add` / `pnpm install` /
+`pnpm remove` — when a task needs a package, give the exact command and let them run it.
+
 ## Type checking
 
 Do not run type checks — don't invoke `tsc` / `pnpm exec tsc --noEmit` (or any equivalent).
 The maintainer reviews type correctness in the IDE. Write correctly-typed code, but leave
 type verification to them.
+
+The webpack build is **transpile-only** by design: `ts-loader` runs with `transpileOnly: true`
+and there is **no** `ForkTsCheckerWebpackPlugin` (`webpack.plugins.ts`). So type errors never
+fail the build or print to the terminal — don't re-add a build-time type-checker. (`strict`
+is on in `tsconfig.json` for IDE checking.)
 
 ## Testing
 
@@ -77,8 +87,8 @@ sandbox). Rationale is reliability/testability, not security.
 Adding a bridge method (the pattern):
 
 1. Add the signature to the `FreezerApi` type in `src/shared/api.ts`.
-2. Implement the forwarder in `src/preload.ts` (`ipcRenderer.invoke('name', ...)`).
-3. Register `ipcMain.handle('name', ...)` in the main process.
+2. Implement the forwarder in `src/preload/index.ts` (`ipcRenderer.invoke('name', ...)`).
+3. Register `ipcMain.handle('name', ...)` in `src/main/ipc.ts`.
 
 ## Project structure
 
@@ -88,7 +98,10 @@ src/
     index.ts            # entry: app lifecycle + window creation
     ipc.ts              # registers all ipcMain.handle; handlers only forward to services
     services/           # domain logic — plain Node, no `import 'electron'`, unit-testable
-                        #   (planned: acf, steamApi, steamPath, steamWatch, freezer)
+      acf.ts            #   read/parse appmanifest_<appId>.acf (@node-steam/vdf)
+      freezer.ts        #   manifest read-only toggle (chmod); freeze/unfreeze writes later
+      steamPath.ts      #   default steamapps path from the Windows registry (reg query)
+                        #   (planned: steamApi, steamWatch)
   preload/
     index.ts            # thin contextBridge -> ipcRenderer.invoke bridge
   renderer/
@@ -96,11 +109,13 @@ src/
     App.tsx             # root component (composes the screen)
     index.html
     index.css           # Tailwind entry + theme
-    components/         # presentational React components (added in the UI step)
+    components/         # presentational React components
     hooks/              # React hooks; the only place that touches window.freezer
+    lib/                # renderer-only helpers (e.g. cn() for className composition)
   shared/
     api.ts              # FreezerApi — the bridge contract (type-only across the boundary)
-                        #   (planned: channels.ts for IPC channel names, types.ts for DTOs)
+    types.ts            # domain DTOs crossing the bridge (AppManifest, AcfResult, …)
+                        #   (planned: channels.ts for IPC channel names)
   types/                # ambient/global declarations only (.d.ts)
     assets.d.ts         #   non-code imports (*.css, ...)
     vendor.d.ts         #   shims for untyped npm packages
@@ -120,8 +135,8 @@ Rules:
   grouped by kind (`assets` / `vendor` / `global`) — never colocated next to source, since
   ambient declarations apply globally regardless of file location.
 
-Folders shown above that don't exist yet (`services/`, `components/`, `hooks/`) appear as
-their step lands; this tree is the agreed target layout.
+The remaining `services/` modules (`steamApi`, `steamWatch`) appear as their step lands;
+this tree is the agreed target layout.
 
 ## Stack
 
@@ -132,12 +147,25 @@ their step lands; this tree is the agreed target layout.
 - UI: React 19 + Tailwind v4 (renderer only). Tailwind runs via PostCSS
   (`postcss.config.js` → `@tailwindcss/postcss`); Steam-palette theme tokens live in
   `src/renderer/index.css` (`@theme`); JSX is enabled by `tsconfig` `"jsx": "react-jsx"`.
+- Toasts: `sonner` for operation-status feedback. Wrapped in `renderer/lib/toast.ts` as
+  `showSuccessToast` / `showErrorToast`; `<Toaster/>` is mounted in `App.tsx`.
 
-## React conventions
+## Code conventions
 
-- Components are **arrow functions typed with `FC`** from React:
-  `const Foo: FC<FooProps> = (props) => { ... }` — use bare `FC` (no type args) when the
+- **Boolean naming:** boolean variables and props are prefixed with `is`, `has`, or `can`
+  (e.g. `isLoading`, `hasError`, `canSubmit`).
+- **React components** are arrow functions typed with `FC`:
+  `const Foo: FC<FooProps> = (props) => { ... }` — bare `FC` (no type args) when the
   component takes no props. Import it as a type: `import { ..., type FC } from 'react'`.
+- **Class names:** compose with the `cn()` helper (`src/renderer/lib/cn.ts`; clsx +
+  tailwind-merge), not template strings — required when classes are conditional or a
+  `className` prop can override defaults.
+- **Comments:** keep them compact — the shortest phrasing that preserves the meaning. Cut
+  words that just restate the code; keep the intent, caveats, and non-obvious choices.
+- **Buttons:** use the `AppButton` component (`renderer/components/AppButton.tsx`) instead
+  of a raw `<button>`. It owns the shared base — a lucide icon (`size-4`), `cursor-pointer`
+  when enabled / `cursor-not-allowed` when disabled, and an optional `isBusy` spinner —
+  while variant styling (colors, padding, border) is passed via `className`.
 
 ## Domain safety rules (do not violate)
 

@@ -14,12 +14,6 @@
   },
   "keywords": [],
   "license": "MIT",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "electron",
-      "electron-winstaller"
-    ]
-  },
   "devDependencies": {
     "@electron-forge/cli": "^7.11.2",
     "@electron-forge/maker-deb": "^7.11.2",
@@ -42,7 +36,6 @@
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "fork-ts-checker-webpack-plugin": "^7.3.0",
     "globals": "^15.15.0",
     "node-loader": "^2.1.0",
     "postcss": "^8.5.15",
@@ -56,8 +49,13 @@
   },
   "dependencies": {
     "@node-steam/vdf": "^2.2.0",
+    "clsx": "^2.1.1",
     "electron-squirrel-startup": "^1.0.1",
+    "lucide-react": "^1.20.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
-  }
+    "react-dom": "^19.2.7",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0"
+  },
+  "packageManager": "pnpm@11.7.0+sha512.19cc852c120c7125760f2443ee6be0ca5b40f9f50598de1a09a1f177503e010e57c23c77646e01e761de59bf874fb22a3398c33ab9691fc13eb946b6f0f4d620"
 }
