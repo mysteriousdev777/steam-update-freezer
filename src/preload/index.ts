@@ -12,6 +12,8 @@ const api: FreezerApi = {
   setManifestReadonly: (steamappsPath, appId, isReadonly) =>
     ipcRenderer.invoke('setManifestReadonly', steamappsPath, appId, isReadonly),
   confirm: options => ipcRenderer.invoke('confirm', options),
+  updateManifest: (steamappsPath, appId) =>
+    ipcRenderer.invoke('updateManifest', steamappsPath, appId),
 };
 
 contextBridge.exposeInMainWorld('freezer', api);

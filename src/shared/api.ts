@@ -26,4 +26,7 @@ export type FreezerApi = {
 
   /** Native OK/Cancel confirmation dialog. Resolves true if the user confirms. */
   confirm: (options: ConfirmOptions) => Promise<boolean>;
+
+  /** Rewrites the manifest to the current public build → fresh manifest, or a mapped error. */
+  updateManifest: (steamappsPath: string, appId: string) => Promise<AcfResult>;
 };

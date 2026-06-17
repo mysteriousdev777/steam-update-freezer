@@ -1,5 +1,5 @@
 import { useEffect, useState, type FC } from 'react';
-import { FileSearch, Lock, LockOpen } from 'lucide-react';
+import { FileSearch, Lock, LockOpen, RefreshCw } from 'lucide-react';
 import { Toaster } from 'sonner';
 import { AppButton } from './components/AppButton';
 import { FolderField } from './components/FolderField';
@@ -11,6 +11,7 @@ import { useDefaultSteamapps } from './hooks/useDefaultSteamapps';
 import { useReadManifest } from './hooks/useReadManifest';
 import { useSetManifestReadonly } from './hooks/useSetManifestReadonly';
 import { useConfirm } from './hooks/useConfirm';
+import { useUpdateManifest } from './hooks/useUpdateManifest';
 import type { AppManifest } from '../shared/types';
 
 export const App: FC = () => {
@@ -20,11 +21,12 @@ export const App: FC = () => {
   const getDefaultSteamapps = useDefaultSteamapps();
   const readManifest = useReadManifest();
   const setManifestReadonly = useSetManifestReadonly();
+  const updateManifest = useUpdateManifest();
   const confirmAction = useConfirm();
 
   const [manifest, setManifest] = useState<AppManifest | null>(null);
   const [isReading, setIsReading] = useState(false);
-  const [busyAction, setBusyAction] = useState<'lock' | 'unlock' | null>(null);
+  const [busyAction, setBusyAction] = useState<'lock' | 'unlock' | 'update' | null>(null);
   // Current read-only state of the manifest; null until known (after a read or a toggle).
   const [isManifestReadonly, setIsManifestReadonly] = useState<boolean | null>(null);
 
@@ -107,6 +109,33 @@ export const App: FC = () => {
     }
   };
 
+  const handleUpdate = async () => {
+    const isConfirmed = await confirmAction({
+      message: 'Update manifest to the current public build?',
+      detail:
+        'Rewrites the .acf and locks it read-only (a .acf.bak backup is made first). Steam must be closed.',
+    });
+
+    if (!isConfirmed) return;
+
+    setBusyAction('update');
+    try {
+      const result = await updateManifest(steamPath, appId);
+
+      if (result.ok) {
+        setManifest(result.manifest);
+        setIsManifestReadonly(result.isReadonly);
+        showSuccessToast(`Manifest updated to build ${result.manifest.buildId} — updates blocked.`);
+      } else {
+        showErrorToast(result.error.message);
+      }
+    } catch (err) {
+      showErrorToast(`Unexpected error: ${String(err)}`);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
   // Solid signal-colored action button; muted + not-allowed when disabled.
   const actionClass = (isEnabled: boolean, enabledColors: string) =>
     cn('px-4 py-2 font-semibold', isEnabled ? enabledColors : 'bg-steam-panel text-steam-muted');
@@ -114,10 +143,10 @@ export const App: FC = () => {
   return (
     <div className="min-h-screen bg-steam-bg text-steam-text">
       <header className="bg-steam-bar px-4 py-2 text-sm font-semibold tracking-wide">
-        ❄ VERSION FREEZER
+        ❄ UPDATE FREEZER
       </header>
       <main className="flex flex-col gap-4 p-6">
-        <h1 className="text-xl font-bold">Steam Version Freezer</h1>
+        <h1 className="text-xl font-bold">Steam Update Freezer</h1>
 
         <FolderField
           id="steam-path"
@@ -163,6 +192,15 @@ export const App: FC = () => {
             className={actionClass(canUnblock, 'bg-unblock text-white hover:brightness-110')}
           >
             Unblock game update
+          </AppButton>
+          <AppButton
+            icon={RefreshCw}
+            isBusy={busyAction === 'update'}
+            onClick={() => void handleUpdate()}
+            disabled={!canWrite}
+            className={actionClass(canWrite, 'bg-steam-accent text-steam-bg hover:brightness-110')}
+          >
+            Update manifest
           </AppButton>
         </div>
 

@@ -8,7 +8,7 @@ import {
 import type { ConfirmOptions } from '../shared/types';
 import { getDefaultSteamappsPath } from './services/steamPath';
 import { readManifest } from './services/acf';
-import { setManifestReadonly } from './services/freezer';
+import { setManifestReadonly, updateManifest } from './services/freezer';
 
 /**
  * Registers every `ipcMain.handle` channel — the main-process side of the preload bridge.
@@ -73,4 +73,9 @@ export function registerIpcHandlers(): void {
 
     return response === 1;
   });
+
+  // Rewrites the manifest to the current public build (backup + Steam-closed guard in freezer).
+  ipcMain.handle('updateManifest', (_event, steamappsPath: string, appId: string) =>
+    updateManifest(steamappsPath, appId),
+  );
 }

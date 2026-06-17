@@ -16,8 +16,17 @@ export type AppManifest = {
   installedDepots: InstalledDepot[];
 };
 
-/** Why an acf operation failed, mapped so the renderer can show a clear message. */
-export type AcfErrorKind = 'not-found' | 'read' | 'parse' | 'invalid' | 'write' | 'permission';
+/** Why an acf or API operation failed, mapped so the renderer can show a clear message. */
+export type AcfErrorKind =
+  | 'not-found'
+  | 'read'
+  | 'parse'
+  | 'invalid'
+  | 'write'
+  | 'permission'
+  | 'steam-running'
+  | 'network'
+  | 'http';
 
 /** A mapped acf error: a machine-readable kind plus a ready-to-show English message. */
 export type AcfError = { kind: AcfErrorKind; message: string };

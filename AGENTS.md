@@ -99,9 +99,10 @@ src/
     ipc.ts              # registers all ipcMain.handle; handlers only forward to services
     services/           # domain logic — plain Node, no `import 'electron'`, unit-testable
       acf.ts            #   read/parse appmanifest_<appId>.acf (@node-steam/vdf)
-      freezer.ts        #   manifest read-only toggle (chmod); freeze/unfreeze writes later
+      freezer.ts        #   read-only toggle + manifest rewrite (backup, Steam-closed guard)
+      steamApi.ts       #   public buildid + depot manifests from api.steamcmd.net
       steamPath.ts      #   default steamapps path from the Windows registry (reg query)
-                        #   (planned: steamApi, steamWatch)
+      steamWatch.ts     #   is Steam running? (tasklist) — write guard
   preload/
     index.ts            # thin contextBridge -> ipcRenderer.invoke bridge
   renderer/
@@ -135,8 +136,7 @@ Rules:
   grouped by kind (`assets` / `vendor` / `global`) — never colocated next to source, since
   ambient declarations apply globally regardless of file location.
 
-The remaining `services/` modules (`steamApi`, `steamWatch`) appear as their step lands;
-this tree is the agreed target layout.
+All `services/` modules now exist; this is the agreed layout.
 
 ## Stack
 
