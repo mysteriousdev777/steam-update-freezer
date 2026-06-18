@@ -36,4 +36,10 @@ export type FreezerApi = {
 
   /** Tells the main process that the user confirmed the quit. */
   confirmQuit: () => Promise<void>;
+
+  /** Minimizes the main window to the taskbar. */
+  minimizeWindow: () => Promise<void>;
+
+  /** Attempts to close the main window (triggers the quit confirmation guard). */
+  closeWindow: () => Promise<void>;
 };

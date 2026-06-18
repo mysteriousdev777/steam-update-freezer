@@ -22,6 +22,8 @@ const api: FreezerApi = {
     return () => ipcRenderer.removeListener('request-quit-confirm', listener);
   },
   confirmQuit: () => ipcRenderer.invoke('confirmQuit'),
+  minimizeWindow: () => ipcRenderer.invoke('minimizeWindow'),
+  closeWindow: () => ipcRenderer.invoke('closeWindow'),
 };
 
 contextBridge.exposeInMainWorld('freezer', api);

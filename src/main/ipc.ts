@@ -57,4 +57,13 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('reportUpdateUnblocked', (_event, isUnblocked: boolean) => {
     setUpdateUnblocked(isUnblocked);
   });
+
+  // Window controls for the custom frameless title bar.
+  ipcMain.handle('minimizeWindow', event => {
+    BrowserWindow.fromWebContents(event.sender)?.minimize();
+  });
+
+  ipcMain.handle('closeWindow', event => {
+    BrowserWindow.fromWebContents(event.sender)?.close();
+  });
 }

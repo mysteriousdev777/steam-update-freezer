@@ -19,6 +19,7 @@ const createWindow = (): void => {
     width: 1024,
     height: 720,
     icon: path.join(app.getAppPath(), 'assets', 'favicon.ico'),
+    frame: false,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },

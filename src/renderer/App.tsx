@@ -1,6 +1,7 @@
 import { type FC } from 'react';
 import { Lock, LockOpen, RefreshCw } from 'lucide-react';
 import { Toaster } from 'sonner';
+import { TitleBar } from './components/TitleBar';
 import { AppButton } from './components/AppButton';
 import { FolderField } from './components/FolderField';
 import { ManifestInfo } from './components/ManifestInfo';
@@ -44,9 +45,7 @@ export const App: FC = () => {
 
   return (
     <div className="min-h-screen bg-steam-bg text-steam-text">
-      <header className="bg-steam-bar px-4 py-2 text-sm font-semibold tracking-wide">
-        ❄ UPDATE FREEZER
-      </header>
+      <TitleBar />
       <main className="flex flex-col gap-4 p-6">
         <h1 className="text-xl font-bold">Steam Update Freezer</h1>
 
