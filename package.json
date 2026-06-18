@@ -1,8 +1,9 @@
 {
   "name": "steam-update-freezer",
-  "productName": "steam-update-freezer",
+  "productName": "Steam Update Freezer",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "Utility to freeze Steam game versions and prevent forced updates.",
+  "author": "mysteriousdev777",
   "main": ".webpack/main",
   "private": true,
   "scripts": {

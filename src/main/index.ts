@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import started from 'electron-squirrel-startup';
+import path from 'path';
 import { registerIpcHandlers } from './ipc';
 import { isUpdateCurrentlyUnblocked } from './services/closeGuard';
 
@@ -17,11 +18,18 @@ const createWindow = (): void => {
   const mainWindow = new BrowserWindow({
     width: 1024,
     height: 720,
+    icon: path.join(app.getAppPath(), 'assets', 'favicon.ico'),
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
   });
 
+  // Hide the default menu in production, but keep it in dev for useful hotkeys (Reload, etc.)
+  if (app.isPackaged) {
+    mainWindow.setMenu(null);
+  }
+
+  mainWindow.setMenu(null);
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // In dev, open DevTools detached so they don't eat into the app's content area (the window
