@@ -1,14 +1,8 @@
-import {
-  BrowserWindow,
-  dialog,
-  ipcMain,
-  type MessageBoxOptions,
-  type OpenDialogOptions,
-} from 'electron';
-import type { ConfirmOptions } from '../shared/types';
+import { BrowserWindow, dialog, ipcMain, type OpenDialogOptions } from 'electron';
 import { getDefaultSteamappsPath } from './services/steamPath';
 import { readManifest } from './services/acf';
 import { setManifestReadonly, updateManifest } from './services/freezer';
+import { setUpdateUnblocked } from './services/closeGuard';
 
 /**
  * Registers every `ipcMain.handle` channel — the main-process side of the preload bridge.
@@ -54,28 +48,13 @@ export function registerIpcHandlers(): void {
       setManifestReadonly(steamappsPath, appId, isReadonly),
   );
 
-  // Native OK/Cancel confirmation dialog; resolves true when the user clicks OK.
-  ipcMain.handle('confirm', async (event, options: ConfirmOptions) => {
-    const box: MessageBoxOptions = {
-      type: 'warning',
-      message: options.message,
-      detail: options.detail,
-      buttons: ['Cancel', 'OK'],
-      defaultId: 1,
-      cancelId: 0,
-      noLink: true,
-    };
-
-    const parent = BrowserWindow.fromWebContents(event.sender);
-    const { response } = parent
-      ? await dialog.showMessageBox(parent, box)
-      : await dialog.showMessageBox(box);
-
-    return response === 1;
-  });
-
   // Rewrites the manifest to the current public build (backup + Steam-closed guard in freezer).
   ipcMain.handle('updateManifest', (_event, steamappsPath: string, appId: string) =>
     updateManifest(steamappsPath, appId),
   );
+
+  // Tracks unblocked state for the quit confirmation guard (see main/index.ts close handler).
+  ipcMain.handle('reportUpdateUnblocked', (_event, isUnblocked: boolean) => {
+    setUpdateUnblocked(isUnblocked);
+  });
 }

@@ -11,9 +11,17 @@ const api: FreezerApi = {
   readManifest: (steamappsPath, appId) => ipcRenderer.invoke('readManifest', steamappsPath, appId),
   setManifestReadonly: (steamappsPath, appId, isReadonly) =>
     ipcRenderer.invoke('setManifestReadonly', steamappsPath, appId, isReadonly),
-  confirm: options => ipcRenderer.invoke('confirm', options),
   updateManifest: (steamappsPath, appId) =>
     ipcRenderer.invoke('updateManifest', steamappsPath, appId),
+  reportUpdateUnblocked: isUnblocked => ipcRenderer.invoke('reportUpdateUnblocked', isUnblocked),
+  onQuitRequest: callback => {
+    const listener = () => callback();
+
+    ipcRenderer.on('request-quit-confirm', listener);
+
+    return () => ipcRenderer.removeListener('request-quit-confirm', listener);
+  },
+  confirmQuit: () => ipcRenderer.invoke('confirmQuit'),
 };
 
 contextBridge.exposeInMainWorld('freezer', api);

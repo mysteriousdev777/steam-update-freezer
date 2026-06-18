@@ -8,8 +8,11 @@
   --color-steam-accent: #66c0f4;
   --color-steam-text: #c7d5e0;
   --color-steam-muted: #8f98a0;
+  /* Higher-contrast label color for small caption text on steam-panel (steam-muted is ~2.8:1). */
+  --color-steam-label: #a8b4bd;
   --color-steam-ok: #5ba32b;
   --color-steam-warn: #ee2244;
+  --color-steam-dislike: #e06363;
   /* Muted action-button colors (softer than ok/warn). */
   --color-block: #4f8a5e;
   --color-unblock: #bd5d55;

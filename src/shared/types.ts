@@ -40,4 +40,10 @@ export type AcfResult =
 export type AcfWriteResult = { ok: true; isReadonly: boolean } | { ok: false; error: AcfError };
 
 /** Options for the native confirmation dialog. */
-export type ConfirmOptions = { message: string; detail?: string };
+export type ConfirmOptions = {
+  message: string;
+  detail?: string;
+  variant?: 'default' | 'danger';
+  confirmLabel?: string;
+  cancelLabel?: string;
+};
