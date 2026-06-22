@@ -6,9 +6,9 @@ import type { FreezerApi } from '../shared/api';
 
 const api: FreezerApi = {
   ping: () => ipcRenderer.invoke('ping'),
-  selectFolder: defaultPath => ipcRenderer.invoke('selectFolder', defaultPath),
-  getDefaultSteamapps: () => ipcRenderer.invoke('getDefaultSteamapps'),
+  listInstalledGames: () => ipcRenderer.invoke('listInstalledGames'),
   readManifest: (steamappsPath, appId) => ipcRenderer.invoke('readManifest', steamappsPath, appId),
+  pickAcfFile: () => ipcRenderer.invoke('pickAcfFile'),
   setManifestReadonly: (steamappsPath, appId, isReadonly) =>
     ipcRenderer.invoke('setManifestReadonly', steamappsPath, appId, isReadonly),
   updateManifest: (steamappsPath, appId) =>

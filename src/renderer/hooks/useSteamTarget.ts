@@ -1,106 +1,82 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { showErrorToast } from '../lib/toast';
+import type { InstalledGame } from '../../shared/types';
 import {
+  clearStoredManualTarget,
   getStoredAppId,
+  getStoredManualTarget,
   setStoredAppId,
-  getStoredSteamPath,
-  setStoredSteamPath,
+  setStoredManualTarget,
 } from '../lib/settings';
-import { useDefaultSteamapps } from './useDefaultSteamapps';
 import type { ReadTarget } from './useManifest';
 
 /**
- * Owns the read target: Steam folder + App ID, their persistence, and the registry default.
- * The folder commits the target (triggers a read) on pick/reset; the App ID only on confirm
- * (the field's Done button) — typing it just updates the draft, no read per keystroke.
- * `target` seeds from storage so a restored pair reads on mount.
+ * Owns the read target: the selected game's library folder + App ID. Picking a game resolves both
+ * at once and commits the target (triggers a read). Two things are persisted independently: the
+ * scanned game's App ID (its library is re-resolved from the live scan, so a moved game still
+ * works) and — with priority — a manually-picked manifest's folder + App ID (the scan never lists
+ * it). Picking a scanned game clears the manual pick. Still exposes `steamPath`/`appId` so the
+ * manifest read/action hooks stay unchanged.
  */
-export const useSteamTarget = () => {
-  const getDefaultSteamapps = useDefaultSteamapps();
-
-  const [steamPath, setSteamPath] = useState(getStoredSteamPath);
-  const [appId, setAppId] = useState(getStoredAppId);
-  const [target, setTarget] = useState<ReadTarget | null>(() =>
-    steamPath && appId ? { path: steamPath, id: appId } : null,
-  );
-  const [isResettingSteamPath, setIsResettingSteamPath] = useState(false);
+export const useSteamTarget = (games: InstalledGame[]) => {
+  const [restoredManual] = useState(getStoredManualTarget);
+  const [steamPath, setSteamPath] = useState(restoredManual?.steamappsPath ?? '');
+  const [appId, setAppId] = useState(() => restoredManual?.appId ?? getStoredAppId());
+  const [target, setTarget] = useState<ReadTarget | null>(null);
 
   const commit = useCallback((path: string, id: string) => {
     if (path && id) setTarget({ path, id });
   }, []);
 
-  // Persist inputs so they're pre-filled on the next launch.
-  useEffect(() => {
-    setStoredAppId(appId);
-  }, [appId]);
-
-  useEffect(() => {
-    setStoredSteamPath(steamPath);
-  }, [steamPath]);
-
-  // Pre-fill the registry default only while empty (never clobber a pick/restore). Commit if an
-  // App ID is known so it reads once the path resolves.
-  useEffect(() => {
-    if (steamPath) return;
-
-    let isCancelled = false;
-
-    getDefaultSteamapps()
-      .then(defaultPath => {
-        if (isCancelled || !defaultPath) return;
-
-        setSteamPath(defaultPath);
-        commit(defaultPath, appId);
-      })
-      .catch(err => {
-        console.error('[bridge] getDefaultSteamapps failed', err);
-      });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [getDefaultSteamapps, steamPath, appId, commit]);
-
-  const changeSteamPath = useCallback(
-    (newPath: string) => {
-      setSteamPath(newPath);
-      commit(newPath, appId);
+  // Set the in-memory target and trigger a read; persistence is left to the caller.
+  const applyTarget = useCallback(
+    (path: string, id: string) => {
+      setSteamPath(path);
+      setAppId(id);
+      commit(path, id);
     },
-    [appId, commit],
+    [commit],
   );
 
-  // Re-read the current fields (App ID confirm + the panel's Refresh).
+  // Pick a scanned game: persist its App ID and drop any manual override.
+  const selectGame = useCallback(
+    (game: InstalledGame) => {
+      applyTarget(game.steamappsPath, game.appId);
+      setStoredAppId(game.appId);
+      clearStoredManualTarget();
+    },
+    [applyTarget],
+  );
+
+  // Pick a manifest the scan didn't list (e.g. an exotic install path): persist it as the manual
+  // override, which takes priority on the next launch.
+  const selectManual = useCallback(
+    (path: string, id: string) => {
+      applyTarget(path, id);
+      setStoredManualTarget({ steamappsPath: path, appId: id });
+    },
+    [applyTarget],
+  );
+
+  // Restore the last pick on launch. A manual override wins and loads directly; otherwise the
+  // scanned game re-resolves its current library as soon as the scan lists it.
+  useEffect(() => {
+    if (target || !appId) return;
+
+    if (restoredManual) {
+      commit(restoredManual.steamappsPath, restoredManual.appId);
+      return;
+    }
+
+    const game = games.find(game => game.appId === appId);
+
+    if (game) selectGame(game);
+  }, [games, appId, target, restoredManual, selectGame, commit]);
+
+  // Re-read the current target (the panel's Refresh / read-error Retry).
   const readCurrent = useCallback(() => {
     commit(steamPath, appId);
   }, [steamPath, appId, commit]);
 
-  const resetSteamPath = useCallback(async () => {
-    setIsResettingSteamPath(true);
-    try {
-      const defaultPath = await getDefaultSteamapps();
-
-      if (defaultPath) {
-        setSteamPath(defaultPath);
-        commit(defaultPath, appId);
-      } else {
-        showErrorToast('Could not determine the default Steam library folder from the registry.');
-      }
-    } catch (err) {
-      showErrorToast(`Unexpected error: ${String(err)}`);
-    } finally {
-      setIsResettingSteamPath(false);
-    }
-  }, [getDefaultSteamapps, appId, commit]);
-
-  return {
-    steamPath,
-    appId,
-    target,
-    setAppId,
-    readCurrent,
-    changeSteamPath,
-    resetSteamPath,
-    isResettingSteamPath,
-  };
+  return { steamPath, appId, target, selectGame, selectManual, readCurrent };
 };

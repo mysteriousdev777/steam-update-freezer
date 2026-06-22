@@ -1,19 +1,30 @@
 import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { parse } from '@node-steam/vdf';
 
-import type { AcfResult, AppManifest, InstalledDepot } from '../../shared/types';
+import type { AcfError, AcfResult, AppManifest, InstalledDepot } from '../../shared/types';
+import { parseVdf } from './vdf';
 
 export const manifestFileName = (appId: string) => `appmanifest_${appId}.acf`;
 
+// Inverse of manifestFileName: pulls the App ID out of an `appmanifest_<digits>.acf`
+// filename, or null if it doesn't match (used when enumerating a library folder).
+export const parseManifestAppId = (fileName: string): string | null =>
+  /^appmanifest_(\d+)\.acf$/.exec(fileName)?.[1] ?? null;
+
 // VDF values arrive as strings; coerce defensively and default missing keys to ''.
 const str = (value: unknown): string => (value == null ? '' : String(value));
+
+// Shorthand for the failed-read result shape.
+const fail = (kind: AcfError['kind'], message: string): AcfResult => ({
+  ok: false,
+  error: { kind, message },
+});
 
 /**
  * Reads and parses `appmanifest_<appId>.acf` under `steamappsPath`, returning its key
  * fields or a mapped error. Pure read — never writes, so it's safe on live Steam files.
  */
-export async function readManifest(steamappsPath: string, appId: string): Promise<AcfResult> {
+export const readManifest = async (steamappsPath: string, appId: string): Promise<AcfResult> => {
   const file = join(steamappsPath, manifestFileName(appId));
 
   let text: string;
@@ -26,55 +37,41 @@ export async function readManifest(steamappsPath: string, appId: string): Promis
   } catch (err) {
     const isMissing = (err as NodeJS.ErrnoException).code === 'ENOENT';
 
-    return {
-      ok: false,
-      error: {
-        kind: isMissing ? 'not-found' : 'read',
-        message: isMissing
-          ? `No manifest at ${file}. Check the Steam folder and App ID.`
-          : `Could not read ${file}: ${String(err)}`,
-      },
-    };
+    return isMissing
+      ? fail('not-found', `No manifest at ${file}. Check the Steam folder and App ID.`)
+      : fail('read', `Could not read ${file}: ${String(err)}`);
   }
 
   let appState: unknown;
 
   try {
-    appState = (parse(text) as { AppState?: unknown }).AppState;
+    appState = (parseVdf(text) as { AppState?: unknown }).AppState;
   } catch (err) {
-    return {
-      ok: false,
-      error: { kind: 'parse', message: `Could not parse ${file}: ${String(err)}` },
-    };
+    return fail('parse', `Could not parse ${file}: ${String(err)}`);
   }
 
   if (!appState || typeof appState !== 'object') {
-    return {
-      ok: false,
-      error: { kind: 'invalid', message: `${file} has no "AppState" block.` },
-    };
+    return fail('invalid', `${file} has no "AppState" block.`);
   }
 
   return { ok: true, isReadonly, manifest: toManifest(appState as Record<string, unknown>) };
-}
+};
 
 // Maps the raw AppState object to our DTO.
-function toManifest(appState: Record<string, unknown>): AppManifest {
-  return {
-    appId: str(appState.appid),
-    name: str(appState.name),
-    buildId: str(appState.buildid),
-    stateFlags: str(appState.StateFlags),
-    installedDepots: toDepots(appState.InstalledDepots),
-  };
-}
+const toManifest = (appState: Record<string, unknown>): AppManifest => ({
+  appId: str(appState.appid),
+  name: str(appState.name),
+  buildId: str(appState.buildid),
+  stateFlags: str(appState.StateFlags),
+  installedDepots: toDepots(appState.InstalledDepots),
+});
 
 // InstalledDepots is a map of depotId -> { manifest, size }; flatten it to a list.
-function toDepots(raw: unknown): InstalledDepot[] {
+const toDepots = (raw: unknown): InstalledDepot[] => {
   if (!raw || typeof raw !== 'object') return [];
 
   return Object.entries(raw as Record<string, unknown>).map(([depotId, value]) => ({
     depotId,
     manifest: str((value as Record<string, unknown> | null)?.manifest),
   }));
-}
+};

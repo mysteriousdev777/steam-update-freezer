@@ -1,8 +1,10 @@
-import { BrowserWindow, dialog, ipcMain, type OpenDialogOptions } from 'electron';
-import { getDefaultSteamappsPath } from './services/steamPath';
-import { readManifest } from './services/acf';
+import { dirname } from 'node:path';
+import { BrowserWindow, dialog, ipcMain } from 'electron';
+import { listInstalledGames } from './services/steamLibraries';
+import { parseManifestAppId, readManifest } from './services/acf';
 import { setManifestReadonly, updateManifest } from './services/freezer';
 import { setUpdateUnblocked } from './services/closeGuard';
+import type { PickAcfFileResult } from '../shared/types';
 
 /**
  * Registers every `ipcMain.handle` channel — the main-process side of the preload bridge.
@@ -14,32 +16,36 @@ export function registerIpcHandlers(): void {
   // Step 1 smoke test of the renderer <-> preload <-> main round-trip.
   ipcMain.handle('ping', () => `pong from main process @ ${new Date().toISOString()}`);
 
-  // Native folder picker. The dialog is Electron glue, so it lives here, not in a service
-  // (services stay pure Node — see AGENTS.md).
-  ipcMain.handle('selectFolder', async (event, defaultPath?: string) => {
-    const options: OpenDialogOptions = {
-      properties: ['openDirectory'],
-      defaultPath,
-    };
-
-    // Anchor to the calling window so it opens modal to the app.
-    const parent = BrowserWindow.fromWebContents(event.sender);
-    const result = parent
-      ? await dialog.showOpenDialog(parent, options)
-      : await dialog.showOpenDialog(options);
-
-    if (result.canceled || result.filePaths.length === 0) return null;
-
-    return result.filePaths[0];
-  });
-
-  // Default steamapps path from the registry; forwards to the pure-Node steamPath service.
-  ipcMain.handle('getDefaultSteamapps', () => getDefaultSteamappsPath());
+  // Enumerates installed games across all Steam libraries; forwards to the steamLibraries service.
+  ipcMain.handle('listInstalledGames', () => listInstalledGames());
 
   // Reads appmanifest_<appId>.acf under the given path; forwards to the acf service.
   ipcMain.handle('readManifest', (_event, steamappsPath: string, appId: string) =>
     readManifest(steamappsPath, appId),
   );
+
+  // Manual target for install paths the scan doesn't find: lets the user point at the .acf
+  // directly. The dialog itself is Electron-only, so it lives here rather than in services/.
+  ipcMain.handle('pickAcfFile', async (event): Promise<PickAcfFileResult> => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    const options = {
+      properties: ['openFile' as const],
+      filters: [{ name: 'Steam App Manifest', extensions: ['acf'] }],
+    };
+    const { canceled, filePaths } = window
+      ? await dialog.showOpenDialog(window, options)
+      : await dialog.showOpenDialog(options);
+
+    if (canceled || filePaths.length === 0) return { ok: false, reason: 'cancelled' };
+
+    const filePath = filePaths[0];
+    const fileName = filePath.split(/[\\/]/).pop() ?? filePath;
+    const appId = parseManifestAppId(fileName);
+
+    if (!appId) return { ok: false, reason: 'invalid-name', fileName };
+
+    return { ok: true, steamappsPath: dirname(filePath), appId };
+  });
 
   // Toggles the manifest's read-only attribute; forwards to the freezer service.
   ipcMain.handle(

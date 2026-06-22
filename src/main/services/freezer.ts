@@ -1,11 +1,11 @@
 import { chmod, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { parse, stringify } from '@node-steam/vdf';
 
-import type { AcfError, AcfResult, AcfWriteResult } from '../../shared/types';
+import type { AcfError, AcfResult, AcfUpdateResult, AcfWriteResult } from '../../shared/types';
 import { manifestFileName, readManifest } from './acf';
 import { fetchPublicBuildInfo } from './steamApi';
 import { isSteamRunning } from './steamWatch';
+import { parseVdf, stringifyVdf } from './vdf';
 
 // Windows maps chmod to the read-only attribute: no write bits = read-only, write bits = writable.
 const READONLY_MODE = 0o444;
@@ -56,7 +56,10 @@ function mapError(file: string, err: unknown): AcfError {
  * (no backup → no write), and marks the file read-only afterwards (a frozen manifest is
  * always locked). Returns the fresh on-disk manifest, or a mapped error.
  */
-export async function updateManifest(steamappsPath: string, appId: string): Promise<AcfResult> {
+export async function updateManifest(
+  steamappsPath: string,
+  appId: string,
+): Promise<AcfUpdateResult> {
   // Steam holds the .acf in memory and rewrites it on exit — it must be fully closed.
   if (await isSteamRunning()) {
     return {
@@ -88,7 +91,7 @@ export async function updateManifest(steamappsPath: string, appId: string): Prom
   let root: { AppState?: Record<string, unknown> };
 
   try {
-    root = parse(text) as { AppState?: Record<string, unknown> };
+    root = parseVdf(text) as { AppState?: Record<string, unknown> };
   } catch (err) {
     return {
       ok: false,
@@ -109,7 +112,15 @@ export async function updateManifest(steamappsPath: string, appId: string): Prom
 
   if (!remote.ok) return remote;
 
-  applyPublicBuild(appState, remote.info.buildId, remote.info.depotManifests);
+  const { buildId, depotManifests } = remote.info;
+
+  // Skip the rewrite (and its backup) when the manifest already claims the current public build —
+  // there's nothing to change. Re-read so the result still reflects on-disk state.
+  if (isAtPublicBuild(appState, buildId, depotManifests)) {
+    return withChanged(await readManifest(steamappsPath, appId), false);
+  }
+
+  applyPublicBuild(appState, buildId, depotManifests);
 
   // Back up the original before writing — no backup, no write. A prior freeze can leave an
   // existing .bak read-only (blocking overwrite), so clear that flag first; writeFile keeps
@@ -130,7 +141,7 @@ export async function updateManifest(steamappsPath: string, appId: string): Prom
   // even if the write throws (e.g. disk full). On write failure, roll back to the original.
   try {
     await chmod(file, WRITABLE_MODE);
-    await writeFile(file, stringify(root), 'utf8');
+    await writeFile(file, stringifyVdf(root), 'utf8');
   } catch (err) {
     await writeFile(file, text, 'utf8').catch(() => {});
 
@@ -140,7 +151,46 @@ export async function updateManifest(steamappsPath: string, appId: string): Prom
   }
 
   // Return the fresh on-disk state so the UI reflects exactly what was written.
-  return readManifest(steamappsPath, appId);
+  return withChanged(await readManifest(steamappsPath, appId), true);
+}
+
+// Tags a manifest read with whether the update actually rewrote the file (false = already current).
+function withChanged(read: AcfResult, changed: boolean): AcfUpdateResult {
+  return read.ok
+    ? { ok: true, changed, manifest: read.manifest, isReadonly: read.isReadonly }
+    : read;
+}
+
+// True when the manifest already claims the current public build: every field applyPublicBuild
+// would set already matches, so the rewrite is a no-op and can be skipped. Mirrors applyPublicBuild.
+// Values arrive from the VDF parser as strings (incl. big depot gids, kept lossless — see vdf.ts);
+// coerce defensively before comparing so a missing field reads as "not current".
+function isAtPublicBuild(
+  appState: Record<string, unknown>,
+  buildId: string,
+  depotManifests: Record<string, string>,
+): boolean {
+  if (String(appState.buildid) !== buildId) return false;
+
+  if (String(appState.TargetBuildID) !== buildId) return false;
+
+  if (String(appState.StateFlags) !== '4') return false;
+
+  if (String(appState.AutoUpdateBehavior) !== '1') return false;
+
+  const installed = appState.InstalledDepots;
+
+  if (installed && typeof installed === 'object') {
+    for (const [depotId, depot] of Object.entries(installed as Record<string, unknown>)) {
+      const gid = depotManifests[depotId];
+
+      if (gid && depot && typeof depot === 'object') {
+        if (String((depot as Record<string, unknown>).manifest) !== gid) return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 // Rewrites the AppState fields that make Steam treat the install as current at the public

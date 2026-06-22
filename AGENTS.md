@@ -98,11 +98,12 @@ src/
     index.ts            # entry: app lifecycle + window creation
     ipc.ts              # registers all ipcMain.handle; handlers only forward to services
     services/           # domain logic — plain Node, no `import 'electron'`, unit-testable
-      acf.ts            #   read/parse appmanifest_<appId>.acf (@node-steam/vdf)
+      acf.ts            #   read/parse appmanifest_<appId>.acf (via ./vdf)
       freezer.ts        #   read-only toggle + manifest rewrite (backup, Steam-closed guard)
       steamApi.ts       #   public buildid + depot manifests from api.steamcmd.net
       steamPath.ts      #   default steamapps path from the Windows registry (reg query)
       steamWatch.ts     #   is Steam running? (tasklist) — write guard
+      vdf.ts            #   vendored Valve VDF parse/stringify (lossless: values stay raw strings)
   preload/
     index.ts            # thin contextBridge -> ipcRenderer.invoke bridge
   renderer/
@@ -141,7 +142,12 @@ All `services/` modules now exist; this is the agreed layout.
 ## Stack
 
 - Electron Forge (webpack-typescript template), TypeScript.
-- `@node-steam/vdf` for parsing/editing `.acf` (Valve VDF). **Do not write a custom parser.**
+- VDF (`.acf`) parsing/editing uses a **vendored** copy of `@node-steam/vdf` at
+  `main/services/vdf.ts` (MIT, attribution in the file header). The one change vs upstream: values
+  are kept as **raw strings** (no number/bool coercion). Upstream coerced `"12345"` → number, which
+  truncated integers > 2^53 (e.g. depot manifest gids) and corrupted them on a parse → stringify
+  round-trip (node-steam/vdf#15) — unacceptable since we rewrite `.acf` in place. **Don't hand-roll
+  a new parser, and don't re-add value coercion to `vdf.ts`.**
 - HTTP: native `fetch` (no axios), wrapped in `steamApi` with an explicit `res.ok` check,
   `AbortController` timeout, and error mapping (`network` / `http` / `parse`).
 - UI: React 19 + Tailwind v4 (renderer only). Tailwind runs via PostCSS

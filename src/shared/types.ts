@@ -16,6 +16,26 @@ export type AppManifest = {
   installedDepots: InstalledDepot[];
 };
 
+/** One installed game discovered across all Steam libraries — a picker list entry. */
+export type InstalledGame = {
+  appId: string;
+  name: string;
+  /** The library `steamapps` folder this game lives in (a game lives in exactly one). */
+  steamappsPath: string;
+  buildId: string;
+  /** true = the manifest is already read-only (frozen). */
+  isReadonly: boolean;
+};
+
+/**
+ * Result of scanning all libraries: the games found, plus how many manifests were present but
+ * couldn't be read/parsed — so the UI can warn that the list may be incomplete.
+ */
+export type InstalledGamesResult = {
+  games: InstalledGame[];
+  skipped: number;
+};
+
 /** Why an acf or API operation failed, mapped so the renderer can show a clear message. */
 export type AcfErrorKind =
   | 'not-found'
@@ -38,6 +58,21 @@ export type AcfResult =
 
 /** Outcome of a manifest attribute change (read-only toggle): success, or a mapped error. */
 export type AcfWriteResult = { ok: true; isReadonly: boolean } | { ok: false; error: AcfError };
+
+/**
+ * Outcome of the manifest update (rewrite to the current public build): the fresh on-disk manifest
+ * plus whether it was actually rewritten (`changed: false` = already at the public build, nothing
+ * written), or a mapped error.
+ */
+export type AcfUpdateResult =
+  | { ok: true; changed: boolean; manifest: AppManifest; isReadonly: boolean }
+  | { ok: false; error: AcfError };
+
+/** Outcome of the manual "browse for a manifest file" picker. */
+export type PickAcfFileResult =
+  | { ok: true; steamappsPath: string; appId: string }
+  | { ok: false; reason: 'cancelled' }
+  | { ok: false; reason: 'invalid-name'; fileName: string };
 
 /** Options for the native confirmation dialog. */
 export type ConfirmOptions = {

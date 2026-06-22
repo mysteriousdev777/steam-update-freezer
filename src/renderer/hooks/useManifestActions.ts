@@ -81,7 +81,18 @@ export const useManifestActions = ({
 
       if (result.ok) {
         applyWriteResult({ manifest: result.manifest, isReadonly: result.isReadonly });
-        showSuccessToast(`Manifest updated to build ${result.manifest.buildId} — updates blocked.`);
+
+        if (result.changed) {
+          showSuccessToast(
+            `Manifest updated to build ${result.manifest.buildId} — updates blocked.`,
+          );
+        } else {
+          // Nothing rewritten — already at the public build. Note the lock state as-is.
+          const lockNote = result.isReadonly ? ' — updates blocked' : '';
+          showSuccessToast(
+            `Already at the current public build ${result.manifest.buildId}${lockNote}.`,
+          );
+        }
       } else {
         showErrorToast(result.error.message);
       }

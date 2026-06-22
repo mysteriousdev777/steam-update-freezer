@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { join, normalize } from 'node:path';
+import { normalize } from 'node:path';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
@@ -9,10 +9,11 @@ const STEAM_REGISTRY_KEY = 'HKCU\\Software\\Valve\\Steam';
 const STEAM_PATH_VALUE = 'SteamPath';
 
 /**
- * Default Steam `steamapps` folder from the registry (`SteamPath` + `steamapps`), or null
- * if Steam isn't installed / the value can't be read — caller then leaves the field empty.
+ * Steam install root from the registry (`SteamPath`), normalized, or null if Steam isn't
+ * installed / the value can't be read. The base for locating each library's `steamapps`
+ * folder and `libraryfolders.vdf` (see steamLibraries).
  */
-export async function getDefaultSteamappsPath(): Promise<string | null> {
+export const getSteamRootPath = async (): Promise<string | null> => {
   try {
     const { stdout } = await execFileAsync('reg', [
       'query',
@@ -23,16 +24,16 @@ export async function getDefaultSteamappsPath(): Promise<string | null> {
 
     const steamPath = parseRegSz(stdout, STEAM_PATH_VALUE);
 
-    // Registry path uses forward slashes; normalize, then append steamapps.
-    return steamPath ? join(normalize(steamPath), 'steamapps') : null;
+    // Registry path uses forward slashes; normalize to native separators.
+    return steamPath ? normalize(steamPath) : null;
   } catch {
     // `reg` exits non-zero when the key/value is missing (Steam not installed).
     return null;
   }
-}
+};
 
 // Parses a `reg query` line ("  SteamPath  REG_SZ  c:/...steam") → the value after REG_SZ.
-function parseRegSz(stdout: string, valueName: string): string | null {
+const parseRegSz = (stdout: string, valueName: string): string | null => {
   for (const rawLine of stdout.split(/\r?\n/)) {
     const line = rawLine.trim();
 
@@ -44,4 +45,4 @@ function parseRegSz(stdout: string, valueName: string): string | null {
   }
 
   return null;
-}
+};
