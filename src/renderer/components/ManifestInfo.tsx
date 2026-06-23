@@ -1,4 +1,4 @@
-import { useState, useEffect, type FC } from 'react';
+import { useState, useEffect, useRef, type FC } from 'react';
 import { ChevronRight, RefreshCw } from 'lucide-react';
 
 import { cn } from '../lib/cn';
@@ -19,11 +19,12 @@ export const ManifestInfo: FC<ManifestInfoProps> = ({
   isRefreshing = false,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isExpanded) {
       const timer = setTimeout(() => {
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
       }, 200);
 
       return () => clearTimeout(timer);
@@ -31,7 +32,7 @@ export const ManifestInfo: FC<ManifestInfoProps> = ({
   }, [isExpanded]);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col scroll-mb-6" ref={containerRef}>
       <div className="flex flex-col rounded border border-white/5 bg-black/20">
         <div className="flex items-center gap-3 px-4 py-3">
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
