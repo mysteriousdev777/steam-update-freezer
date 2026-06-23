@@ -8,7 +8,7 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
-import { Check, X, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 import type { ConfirmOptions } from '../../shared/types';
 import { AppButton } from '../components/AppButton';
@@ -59,32 +59,36 @@ export const ConfirmProvider: FC<{ children: ReactNode }> = ({ children }) => {
 
       {isOpen && options && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded bg-steam-panel p-6 shadow-xl border border-steam-bar">
-            <h2
-              className={cn(
-                'mb-2 text-xl font-bold flex items-center gap-2',
-                isDanger ? 'text-steam-dislike' : 'text-steam-text',
+          <div className="w-full max-w-md rounded-[3px] bg-steam-panel shadow-2xl border border-white/10">
+            <div className="p-6">
+              <h2
+                className={cn(
+                  'mb-3 text-xl font-bold flex items-center gap-3',
+                  isDanger ? 'text-action-unfreeze' : 'text-white',
+                )}
+              >
+                {isDanger && <AlertTriangle className="size-6" />}
+                {options.message}
+              </h2>
+              {options.detail && (
+                <p className="text-base text-steam-text leading-relaxed">{options.detail}</p>
               )}
-            >
-              {isDanger && <AlertTriangle className="size-6" />}
-              {options.message}
-            </h2>
-            {options.detail && <p className="text-steam-label">{options.detail}</p>}
+            </div>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="flex justify-end gap-3 p-6 pt-0">
               <AppButton
-                icon={X}
                 onClick={handleCancel}
-                className="bg-steam-bg px-4 py-2 font-semibold text-steam-text hover:brightness-110"
+                className="bg-white/5 px-5 py-2.5 text-[14px] font-medium text-steam-text hover:bg-white/10 hover:text-white transition-colors rounded-[2px] border border-white/10"
               >
                 {options.cancelLabel || 'Cancel'}
               </AppButton>
               <AppButton
-                icon={Check}
                 onClick={handleConfirm}
                 className={cn(
-                  'px-4 py-2 font-semibold hover:brightness-110',
-                  isDanger ? 'bg-steam-dislike text-white' : 'bg-steam-accent text-steam-bg',
+                  'px-6 py-2.5 text-[14px] font-medium text-white transition-all rounded-[2px]',
+                  isDanger
+                    ? 'bg-action-unfreeze hover:brightness-110'
+                    : 'bg-action-freeze hover:brightness-110',
                 )}
               >
                 {options.confirmLabel || 'Confirm'}

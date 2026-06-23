@@ -3,7 +3,7 @@
 /* Steam-inspired palette, exposed as Tailwind theme tokens (e.g. bg-steam-bg, text-steam-accent). */
 @theme {
   --color-steam-bg: #1b2838;
-  --color-steam-panel: #2a475e;
+  --color-steam-panel: #1c2f43;
   --color-steam-bar: #171a21;
   --color-steam-accent: #66c0f4;
   --color-steam-text: #c7d5e0;
@@ -12,10 +12,17 @@
   --color-steam-label: #a8b4bd;
   --color-steam-ok: #5ba32b;
   --color-steam-warn: #ee2244;
-  --color-steam-dislike: #e06363;
-  /* Muted action-button colors (softer than ok/warn). */
-  --color-block: #4f8a5e;
-  --color-unblock: #bd5d55;
+
+  /* Scrollbar colors */
+  --color-steam-scrollbar: #434953;
+  --color-steam-scrollbar-hover: #525862;
+
+  /* Action-button colors */
+  --color-action-freeze: #5c7e10;
+  --color-action-unfreeze: #e06363;
+  --color-action-unfreeze-hover: #f54b4b;
+  --color-update-start: #06bfff;
+  --color-update-end: #2b74ff;
 }
 
 @layer base {
@@ -24,5 +31,22 @@
     font-family: system-ui, Arial, sans-serif;
     background-color: var(--color-steam-bg);
     color: var(--color-steam-text);
+  }
+
+  /* Custom scrollbar styling to match Steam dark theme */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-steam-bar);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-steam-scrollbar);
+    border: 3px solid var(--color-steam-bar);
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-steam-scrollbar-hover);
   }
 }

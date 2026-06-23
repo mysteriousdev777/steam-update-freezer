@@ -4,8 +4,8 @@ import { LoaderCircle, type LucideIcon } from 'lucide-react';
 import { cn } from '../lib/cn';
 
 type AppButtonProps = {
-  // Every button carries an icon (see AGENTS.md); icon-only buttons just omit children.
-  icon: LucideIcon;
+  // Every button usually carries an icon; icon-only buttons omit children.
+  icon?: LucideIcon;
   // When true, the icon becomes a spinner and the button is disabled.
   isBusy?: boolean;
 } & ButtonHTMLAttributes<HTMLButtonElement>;
@@ -35,7 +35,11 @@ export const AppButton: FC<AppButtonProps> = ({
       )}
       {...rest}
     >
-      {isBusy ? <LoaderCircle className="size-4 animate-spin" /> : <Icon className="size-4" />}
+      {isBusy ? (
+        <LoaderCircle className="size-4 animate-spin" />
+      ) : (
+        Icon && <Icon className="size-4" />
+      )}
       {children}
     </button>
   );

@@ -13,7 +13,6 @@ import { useManifest } from './hooks/useManifest';
 import { useManifestActions } from './hooks/useManifestActions';
 import { useQuitGuard } from './hooks/useQuitGuard';
 import { useBrowseAcf } from './hooks/useBrowseAcf';
-
 export const App: FC = () => {
   const {
     games,
@@ -62,9 +61,9 @@ export const App: FC = () => {
     cn('px-4 py-2 font-semibold', isEnabled ? enabledColors : 'bg-steam-panel text-steam-muted');
 
   return (
-    <div className="min-h-screen bg-steam-bg text-steam-text">
+    <div className="flex h-screen flex-col overflow-hidden bg-steam-bg text-steam-text">
       <TitleBar />
-      <main className="flex flex-col gap-4 p-6">
+      <main className="flex-1 overflow-y-auto flex flex-col gap-4 p-6">
         <h1 className="text-xl font-bold">Steam Update Freezer</h1>
 
         <div className="flex items-end gap-2">
@@ -124,33 +123,46 @@ export const App: FC = () => {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <AppButton
             icon={Lock}
             isBusy={busyAction === 'lock'}
             onClick={() => void setReadonly(true)}
             disabled={!canBlock}
-            className={actionClass(canBlock, 'bg-block text-white hover:brightness-110')}
+            className={actionClass(
+              canBlock,
+              'bg-action-freeze text-white transition-colors duration-200 hover:bg-steam-ok',
+            )}
           >
-            Block game update
+            Block updates
           </AppButton>
-          <AppButton
-            icon={LockOpen}
-            isBusy={busyAction === 'unlock'}
-            onClick={() => void setReadonly(false)}
-            disabled={!canUnblock}
-            className={actionClass(canUnblock, 'bg-unblock text-white hover:brightness-110')}
-          >
-            Unblock game update
-          </AppButton>
+
           <AppButton
             icon={RefreshCw}
             isBusy={busyAction === 'update'}
             onClick={() => void update()}
             disabled={!canWrite}
-            className={actionClass(canWrite, 'bg-steam-accent text-steam-bg hover:brightness-110')}
+            className={actionClass(
+              canWrite,
+              'bg-[length:200%_auto] bg-right bg-gradient-to-r from-update-start via-update-start via-50% to-update-end text-white transition-[background-position] duration-300 hover:bg-left',
+            )}
           >
             Update manifest
+          </AppButton>
+
+          <div className="mx-8 h-8 w-px bg-white/10" />
+
+          <AppButton
+            icon={LockOpen}
+            isBusy={busyAction === 'unlock'}
+            onClick={() => void setReadonly(false)}
+            disabled={!canUnblock}
+            className={actionClass(
+              canUnblock,
+              'bg-action-unfreeze text-white transition-colors duration-200 hover:bg-action-unfreeze-hover',
+            )}
+          >
+            Unblock updates
           </AppButton>
         </div>
 
@@ -163,7 +175,7 @@ export const App: FC = () => {
           />
         )}
       </main>
-      <Toaster theme="dark" richColors position="top-right" />
+      <Toaster theme="dark" position="top-right" offset={{ top: 48 }} />
     </div>
   );
 };
