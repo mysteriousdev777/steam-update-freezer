@@ -3,7 +3,8 @@ import { useCallback, useState } from 'react';
 import type { AppManifest } from '../../shared/types';
 import { showErrorToast, showSuccessToast } from '../lib/toast';
 import { useConfirm } from './useConfirm';
-import { useSetManifestReadonly } from './useSetManifestReadonly';
+import { useFreezeManifest } from './useFreezeManifest';
+import { useRestoreManifest } from './useRestoreManifest';
 import { useUpdateManifest } from './useUpdateManifest';
 
 type UseManifestActionsArgs = {
@@ -14,9 +15,9 @@ type UseManifestActionsArgs = {
 };
 
 /**
- * Manifest write actions: block (lock read-only), unblock (drop the freeze), update (rewrite to
- * the current public build, then lock). Owns busy state + per-action enablement; pushes results
- * back via `applyWriteResult`.
+ * Manifest write actions: block (lock read-only), unblock (restore the genuine manifest from the
+ * backup, then unlock), update (rewrite to the current public build, then lock). Owns busy state +
+ * per-action enablement; pushes results back via `applyWriteResult`.
  */
 export const useManifestActions = ({
   steamPath,
@@ -24,7 +25,8 @@ export const useManifestActions = ({
   isManifestReadonly,
   applyWriteResult,
 }: UseManifestActionsArgs) => {
-  const setManifestReadonly = useSetManifestReadonly();
+  const freezeManifest = useFreezeManifest();
+  const restoreManifest = useRestoreManifest();
   const updateManifest = useUpdateManifest();
   const confirm = useConfirm();
 
@@ -35,36 +37,61 @@ export const useManifestActions = ({
   const canBlock = canWrite && isManifestReadonly === false;
   const canUnblock = canWrite && isManifestReadonly === true;
 
-  const setReadonly = useCallback(
-    async (isReadonly: boolean) => {
-      // Unblocking drops the freeze (Steam may update again) — confirm first.
-      if (!isReadonly) {
-        const isConfirmed = await confirm({
-          message: 'Unblock game update?',
-          detail: 'Steam will be allowed to update this game again, removing the freeze.',
-        });
+  // Block: snapshot the genuine manifest to the backup, then lock read-only. Writes a backup, so
+  // Steam must be closed — confirm first.
+  const block = useCallback(async () => {
+    const isConfirmed = await confirm({
+      message: 'Block game updates?',
+      detail:
+        'Saves a backup of the current version (.acf.bak) and locks the manifest. Steam must be closed.',
+    });
 
-        if (!isConfirmed) return;
+    if (!isConfirmed) return;
+
+    setBusyAction('lock');
+    try {
+      const result = await freezeManifest(steamPath, appId);
+
+      if (result.ok) {
+        applyWriteResult({ isReadonly: result.isReadonly });
+        showSuccessToast('Game updates are now blocked.');
+      } else {
+        showErrorToast(result.error.message);
       }
+    } catch (err) {
+      showErrorToast(`Unexpected error: ${String(err)}`);
+    } finally {
+      setBusyAction(null);
+    }
+  }, [confirm, freezeManifest, steamPath, appId, applyWriteResult]);
 
-      setBusyAction(isReadonly ? 'lock' : 'unlock');
-      try {
-        const result = await setManifestReadonly(steamPath, appId, isReadonly);
+  // Unblock: restore the genuine manifest from the backup, then unlock. Rewrites the .acf
+  // (restoring the true installed build so SteamPipe's delta stays correct), so Steam must be closed.
+  const unblock = useCallback(async () => {
+    const isConfirmed = await confirm({
+      message: 'Unblock game update?',
+      detail:
+        'Restores the original manifest from the backup and lets Steam update this game again. Steam must be closed.',
+    });
 
-        if (result.ok) {
-          applyWriteResult({ isReadonly: result.isReadonly });
-          showSuccessToast(`Game updates are now ${result.isReadonly ? 'blocked' : 'unblocked'}.`);
-        } else {
-          showErrorToast(result.error.message);
-        }
-      } catch (err) {
-        showErrorToast(`Unexpected error: ${String(err)}`);
-      } finally {
-        setBusyAction(null);
+    if (!isConfirmed) return;
+
+    setBusyAction('unlock');
+    try {
+      const result = await restoreManifest(steamPath, appId);
+
+      if (result.ok) {
+        applyWriteResult({ manifest: result.manifest, isReadonly: result.isReadonly });
+        showSuccessToast('Original manifest restored — updates unblocked.');
+      } else {
+        showErrorToast(result.error.message);
       }
-    },
-    [confirm, setManifestReadonly, steamPath, appId, applyWriteResult],
-  );
+    } catch (err) {
+      showErrorToast(`Unexpected error: ${String(err)}`);
+    } finally {
+      setBusyAction(null);
+    }
+  }, [confirm, restoreManifest, steamPath, appId, applyWriteResult]);
 
   const update = useCallback(async () => {
     const isConfirmed = await confirm({
@@ -103,5 +130,5 @@ export const useManifestActions = ({
     }
   }, [confirm, updateManifest, steamPath, appId, applyWriteResult]);
 
-  return { busyAction, canWrite, canBlock, canUnblock, setReadonly, update };
+  return { busyAction, canWrite, canBlock, canUnblock, block, unblock, update };
 };

@@ -25,16 +25,17 @@ export type FreezerApi = {
    * path) → its library folder + App ID, or why it couldn't be used. */
   pickAcfFile: () => Promise<PickAcfFileResult>;
 
-  /** Sets/clears the read-only attribute of `appmanifest_<appId>.acf` (no content change). */
-  setManifestReadonly: (
-    steamappsPath: string,
-    appId: string,
-    isReadonly: boolean,
-  ) => Promise<AcfWriteResult>;
+  /** Freeze (Block): snapshots the genuine manifest to `.acf.bak`, then locks it read-only → the
+   * on-disk read-only state, or a mapped error. Writes a backup, so Steam must be closed. */
+  freezeManifest: (steamappsPath: string, appId: string) => Promise<AcfWriteResult>;
 
   /** Rewrites the manifest to the current public build (skipped if already current) → fresh
    * manifest + whether it changed, or a mapped error. */
   updateManifest: (steamappsPath: string, appId: string) => Promise<AcfUpdateResult>;
+
+  /** Unfreeze: restores the genuine manifest from `.acf.bak`, clears read-only, and drops the
+   * backup → fresh manifest, or a mapped error. Writes content, so Steam must be closed. */
+  restoreManifest: (steamappsPath: string, appId: string) => Promise<AcfResult>;
 
   /** Reports whether updates are currently unblocked, so quitting can be guarded with a confirm. */
   reportUpdateUnblocked: (isUnblocked: boolean) => Promise<void>;

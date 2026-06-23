@@ -2,7 +2,7 @@ import { dirname } from 'node:path';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
 import { listInstalledGames } from './services/steamLibraries';
 import { parseManifestAppId, readManifest } from './services/acf';
-import { setManifestReadonly, updateManifest } from './services/freezer';
+import { freezeManifest, restoreManifest, updateManifest } from './services/freezer';
 import { setUpdateUnblocked } from './services/closeGuard';
 import type { PickAcfFileResult } from '../shared/types';
 
@@ -47,16 +47,19 @@ export function registerIpcHandlers(): void {
     return { ok: true, steamappsPath: dirname(filePath), appId };
   });
 
-  // Toggles the manifest's read-only attribute; forwards to the freezer service.
-  ipcMain.handle(
-    'setManifestReadonly',
-    (_event, steamappsPath: string, appId: string, isReadonly: boolean) =>
-      setManifestReadonly(steamappsPath, appId, isReadonly),
+  // Freeze (Block): snapshot genuine to .acf.bak then lock read-only (Steam-closed guard in freezer).
+  ipcMain.handle('freezeManifest', (_event, steamappsPath: string, appId: string) =>
+    freezeManifest(steamappsPath, appId),
   );
 
   // Rewrites the manifest to the current public build (backup + Steam-closed guard in freezer).
   ipcMain.handle('updateManifest', (_event, steamappsPath: string, appId: string) =>
     updateManifest(steamappsPath, appId),
+  );
+
+  // Unfreeze: restores the genuine manifest from .acf.bak and unlocks (Steam-closed guard in freezer).
+  ipcMain.handle('restoreManifest', (_event, steamappsPath: string, appId: string) =>
+    restoreManifest(steamappsPath, appId),
   );
 
   // Tracks unblocked state for the quit confirmation guard (see main/index.ts close handler).

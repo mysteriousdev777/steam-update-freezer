@@ -45,12 +45,14 @@ export const App: FC = () => {
     [applyWriteResult, markGameReadonly, appId],
   );
 
-  const { busyAction, canWrite, canBlock, canUnblock, setReadonly, update } = useManifestActions({
-    steamPath,
-    appId,
-    isManifestReadonly,
-    applyWriteResult: handleWriteResult,
-  });
+  const { busyAction, canWrite, canBlock, canUnblock, block, unblock, update } = useManifestActions(
+    {
+      steamPath,
+      appId,
+      isManifestReadonly,
+      applyWriteResult: handleWriteResult,
+    },
+  );
 
   useQuitGuard(isManifestReadonly === false);
 
@@ -127,7 +129,7 @@ export const App: FC = () => {
           <AppButton
             icon={Lock}
             isBusy={busyAction === 'lock'}
-            onClick={() => void setReadonly(true)}
+            onClick={() => void block()}
             disabled={!canBlock}
             className={actionClass(
               canBlock,
@@ -155,7 +157,7 @@ export const App: FC = () => {
           <AppButton
             icon={LockOpen}
             isBusy={busyAction === 'unlock'}
-            onClick={() => void setReadonly(false)}
+            onClick={() => void unblock()}
             disabled={!canUnblock}
             className={actionClass(
               canUnblock,

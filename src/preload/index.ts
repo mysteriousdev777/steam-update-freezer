@@ -9,10 +9,12 @@ const api: FreezerApi = {
   listInstalledGames: () => ipcRenderer.invoke('listInstalledGames'),
   readManifest: (steamappsPath, appId) => ipcRenderer.invoke('readManifest', steamappsPath, appId),
   pickAcfFile: () => ipcRenderer.invoke('pickAcfFile'),
-  setManifestReadonly: (steamappsPath, appId, isReadonly) =>
-    ipcRenderer.invoke('setManifestReadonly', steamappsPath, appId, isReadonly),
+  freezeManifest: (steamappsPath, appId) =>
+    ipcRenderer.invoke('freezeManifest', steamappsPath, appId),
   updateManifest: (steamappsPath, appId) =>
     ipcRenderer.invoke('updateManifest', steamappsPath, appId),
+  restoreManifest: (steamappsPath, appId) =>
+    ipcRenderer.invoke('restoreManifest', steamappsPath, appId),
   reportUpdateUnblocked: isUnblocked => ipcRenderer.invoke('reportUpdateUnblocked', isUnblocked),
   onQuitRequest: callback => {
     const listener = () => callback();

@@ -99,7 +99,7 @@ src/
     ipc.ts              # registers all ipcMain.handle; handlers only forward to services
     services/           # domain logic — plain Node, no `import 'electron'`, unit-testable
       acf.ts            #   read/parse appmanifest_<appId>.acf (via ./vdf)
-      freezer.ts        #   read-only toggle + manifest rewrite (backup, Steam-closed guard)
+      freezer.ts        #   freeze (snapshot+lock), manifest rewrite, unfreeze restore (atomic writes, backup, Steam-closed guard)
       steamApi.ts       #   public buildid + depot manifests from api.steamcmd.net
       steamPath.ts      #   default steamapps path from the Windows registry (reg query)
       steamWatch.ts     #   is Steam running? (tasklist) — write guard
@@ -175,10 +175,21 @@ All `services/` modules now exist; this is the agreed layout.
 
 ## Domain safety rules (do not violate)
 
-- Steam must be **fully closed** before writing any `.acf` (it holds state in memory and
-  will overwrite the file otherwise).
-- Always back up to `.acf.bak` **before** writing; if the backup fails, **do not write**.
-- Mark the `.acf` **read-only** after freezing; remove read-only on unfreeze.
+- Steam must be **fully closed** for every action that touches `.acf`/`.acf.bak` — **Block**,
+  **Update**, and the **unfreeze restore** (Steam holds state in memory and overwrites on exit).
+- **Freezing always snapshots first:** both **Block** and **Update** write the **genuine original**
+  to `.acf.bak` before locking/rewriting, so a frozen (read-only) `.acf` **always** has a backup
+  holding the version that matches the files on disk. If the backup write fails, **do not freeze**
+  (no backup → no lock/write).
+- **Never overwrite the backup while the manifest is frozen** — re-faking across builds must keep
+  the existing `.bak` (replacing it with a later fake loses the only correct base for a SteamPipe
+  delta on unfreeze and the sole recovery source). A frozen manifest with **no** backup is only
+  reachable by external deletion: **abort the update** rather than snapshot a fake as "genuine".
+- Write `.acf` and `.acf.bak` **atomically** (temp file + `rename`) so a crash mid-write can't leave
+  a truncated manifest.
+- **Unfreeze restores** the genuine manifest from `.acf.bak`, then clears read-only and removes the
+  backup (so the next freeze re-snapshots a fresh original). Leaving a faked manifest in place
+  corrupts the install on Steam's next update — a corrupt/empty `.acf.bak` aborts the restore.
 - **Never** trigger Steam's "verify integrity" on a frozen game.
 
 ## Known issues
