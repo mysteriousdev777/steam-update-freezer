@@ -97,6 +97,7 @@ src/
   main/                 # main process (Node, full privileges)
     index.ts            # entry: app lifecycle + window creation
     ipc.ts              # registers all ipcMain.handle; handlers only forward to services
+    windowState.ts      # persist/restore main-window bounds (electron glue: app/screen/BrowserWindow)
     services/           # domain logic — plain Node, no `import 'electron'`, unit-testable
       acf.ts            #   read/parse appmanifest_<appId>.acf (via ./vdf)
       freezer.ts        #   freeze (snapshot+lock), manifest rewrite, unfreeze restore (atomic writes, backup, Steam-closed guard)
@@ -127,8 +128,10 @@ src/
 Rules:
 
 - `main/services/*` must not import `electron`; keep them pure Node so they unit-test
-  without launching Electron. Electron coupling lives only in `main/index.ts` and
-  `main/ipc.ts`.
+  without launching Electron. Electron coupling stays out of `services/` — it lives in
+  `main/index.ts`, `main/ipc.ts`, and dedicated electron-glue modules at `main/*` (e.g.
+  `main/windowState.ts`) for cohesive window/lifecycle concerns that genuinely need
+  `app`/`screen`/`BrowserWindow`. The invariant is `services/` purity, not a fixed file list.
 - The renderer reaches main only via `window.freezer`, and only through a hook in
   `renderer/hooks/` — components never call the bridge directly.
 - Entry points are wired in `forge.config.ts` (renderer html/js + preload) and
