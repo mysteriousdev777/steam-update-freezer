@@ -162,6 +162,10 @@ All `services/` modules now exist; this is the agreed layout.
 
 - **Boolean naming:** boolean variables and props are prefixed with `is`, `has`, or `can`
   (e.g. `isLoading`, `hasError`, `canSubmit`).
+- **Type declarations:** use `type`, never `interface` (enforced by
+  `@typescript-eslint/consistent-type-definitions`). The sole exception is ambient declaration
+  merging — e.g. augmenting the global `Window` in `src/types/global.d.ts` requires `interface`,
+  so the rule is turned off for `**/*.d.ts`.
 - **React components** are arrow functions typed with `FC`:
   `const Foo: FC<FooProps> = (props) => { ... }` — bare `FC` (no type args) when the
   component takes no props. Import it as a type: `import { ..., type FC } from 'react'`.

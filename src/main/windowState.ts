@@ -2,13 +2,13 @@ import { app, BrowserWindow, screen } from 'electron';
 import fs from 'fs';
 import path from 'path';
 
-interface WindowState {
+type WindowState = {
   x?: number;
   y?: number;
   width: number;
   height: number;
   isMaximized?: boolean;
-}
+};
 
 // Minimum on-screen square (px per side) a restored window must keep visible.
 const MIN_VISIBLE = 64;

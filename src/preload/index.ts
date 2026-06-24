@@ -16,6 +16,8 @@ const api: FreezerApi = {
   restoreManifest: (steamappsPath, appId) =>
     ipcRenderer.invoke('restoreManifest', steamappsPath, appId),
   reportUpdateUnblocked: isUnblocked => ipcRenderer.invoke('reportUpdateUnblocked', isUnblocked),
+  reportRendererError: (message, stack) =>
+    ipcRenderer.invoke('reportRendererError', message, stack),
   onQuitRequest: callback => {
     const listener = () => callback();
 

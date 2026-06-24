@@ -57,7 +57,18 @@ export default tseslint.config(
       ],
       // Callbacks are always arrows (AGENTS.md → Function style).
       'prefer-arrow-callback': 'error',
+      // Declare types with `type`, never `interface` (AGENTS.md → Code conventions).
+      '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
       'prettier/prettier': 'warn',
+    },
+  },
+
+  // Exception: ambient declarations need `interface` for declaration merging (e.g. augmenting
+  // the global Window in src/types/global.d.ts), so the type-only rule can't apply there.
+  {
+    files: ['**/*.d.ts'],
+    rules: {
+      '@typescript-eslint/consistent-type-definitions': 'off',
     },
   },
 );

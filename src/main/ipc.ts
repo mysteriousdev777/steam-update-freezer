@@ -4,6 +4,7 @@ import { listInstalledGames } from './services/steamLibraries';
 import { parseManifestAppId, readManifest } from './services/acf';
 import { freezeManifest, restoreManifest, updateManifest } from './services/freezer';
 import { setUpdateUnblocked } from './services/closeGuard';
+import { logToFile } from './logger';
 import type { PickAcfFileResult } from '../shared/types';
 
 /**
@@ -65,6 +66,12 @@ export function registerIpcHandlers(): void {
   // Tracks unblocked state for the quit confirmation guard (see main/index.ts close handler).
   ipcMain.handle('reportUpdateUnblocked', (_event, isUnblocked: boolean) => {
     setUpdateUnblocked(isUnblocked);
+  });
+
+  // Appends a renderer-side error (ErrorBoundary catch or a global handler) to the same on-disk
+  // log the main process uses for its own failures.
+  ipcMain.handle('reportRendererError', (_event, message: string, stack?: string) => {
+    logToFile('renderer', stack ? `${message}\n${stack}` : message);
   });
 
   // Window controls for the custom frameless title bar.

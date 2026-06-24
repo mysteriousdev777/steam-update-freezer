@@ -40,6 +40,10 @@ export type FreezerApi = {
   /** Reports whether updates are currently unblocked, so quitting can be guarded with a confirm. */
   reportUpdateUnblocked: (isUnblocked: boolean) => Promise<void>;
 
+  /** Forwards a renderer-side error (an ErrorBoundary render crash, or a global/unhandled
+   * rejection) to the main process, which appends it to the same on-disk log. */
+  reportRendererError: (message: string, stack?: string) => Promise<void>;
+
   /** Listens for a request from the main process to show the quit confirmation dialog.
    * Returns an unsubscribe function — call it on cleanup to avoid leaking IPC listeners. */
   onQuitRequest: (callback: () => void) => () => void;

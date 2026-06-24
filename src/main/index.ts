@@ -1,7 +1,8 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import isSquirrelStartup from 'electron-squirrel-startup';
 import path from 'path';
 import { registerIpcHandlers } from './ipc';
+import { logToFile } from './logger';
 import { isUpdateCurrentlyUnblocked } from './services/closeGuard';
 import { createWindowState } from './windowState';
 
@@ -14,6 +15,28 @@ declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 if (isSquirrelStartup) {
   app.quit();
 }
+
+// Our listener overrides Node's default termination, so exit ourselves — resuming after an
+// uncaught exception is unsafe (undefined state; this app writes .acf files). Log, notify, exit.
+function handleFatalError(scope: string, error: unknown): void {
+  logToFile(scope, error instanceof Error ? (error.stack ?? error.message) : String(error));
+  dialog.showErrorBox(
+    'Steam Update Freezer crashed',
+    `A fatal error (${scope}) occurred and the app must close. Details were written to the log.`,
+  );
+  app.exit(1);
+}
+
+process.on('uncaughtException', error => handleFatalError('uncaughtException', error));
+
+// A rejected promise is less catastrophic than an uncaught exception — it needn't corrupt
+// synchronous state — so log it for diagnosis but keep running instead of quitting.
+process.on('unhandledRejection', reason => {
+  logToFile(
+    'unhandledRejection',
+    reason instanceof Error ? (reason.stack ?? reason.message) : String(reason),
+  );
+});
 
 const createWindow = (): void => {
   const windowState = createWindowState(1024, 720);
@@ -34,6 +57,14 @@ const createWindow = (): void => {
   });
 
   windowState.manage(mainWindow);
+
+  // The whole renderer process died (OOM/native crash) — React and the ErrorBoundary are gone,
+  // so record it from main. 'clean-exit' is a normal teardown, not a crash.
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    if (details.reason === 'clean-exit') return;
+
+    logToFile('render-process-gone', `reason=${details.reason} exitCode=${details.exitCode}`);
+  });
 
   // Hide the default menu in production, but keep it in dev for useful hotkeys (Reload, etc.)
   if (app.isPackaged) {
