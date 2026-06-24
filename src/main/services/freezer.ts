@@ -48,11 +48,13 @@ async function writeFileAtomic(file: string, data: string, readonly = false): Pr
 
 /**
  * Freeze (Block): snapshot the genuine manifest to `.acf.bak`, then lock the `.acf` read-only.
- * Block only ever runs on an unfrozen (writable, genuine) manifest, so the snapshot is the true
- * on-disk version. Taking it here makes "frozen ⇒ a backup exists" hold for *both* freeze paths
- * (Block and Update) — which is what lets updateManifest safely tell a genuine freeze apart from a
- * fake one. Backup before lock: if the backup fails, the manifest is NOT locked (no backup → no
- * freeze). Steam must be closed so the snapshot is stable and the lock sticks.
+ * Self-guards first: if the `.acf` is already read-only it bails idempotently — re-snapshotting a
+ * frozen (possibly faked) manifest would clobber the genuine `.acf.bak`, the only base for unfreeze
+ * (rule 3); the UI's Block gate is just the first line. On an unfrozen manifest the snapshot is the
+ * true on-disk version, so "frozen ⇒ a backup exists" holds for *both* freeze paths (Block and
+ * Update) — which lets updateManifest tell a genuine freeze from a fake one. Backup before lock: if
+ * it fails, the manifest is NOT locked (no backup → no freeze). Steam must be closed so the snapshot
+ * is stable and the lock sticks.
  */
 export async function freezeManifest(
   steamappsPath: string,
@@ -85,6 +87,19 @@ export async function freezeManifest(
       },
     };
   }
+
+  // Already frozen: re-snapshotting would copy the (possibly faked) `.acf` over the genuine
+  // `.acf.bak` and lose the only recovery base for unfreeze (rule 3). Bail idempotently — the UI
+  // gate is just the first line; this is the service-level seatbelt for stale state / future callers.
+  let isAlreadyReadonly = false;
+
+  try {
+    isAlreadyReadonly = ((await stat(file)).mode & 0o200) === 0;
+  } catch {
+    // stat shouldn't fail right after a successful read; treat as not-frozen if it does.
+  }
+
+  if (isAlreadyReadonly) return { ok: true, isReadonly: true };
 
   // Don't snapshot a corrupt manifest as the "genuine" original.
   if (!isParseableManifest(text)) {
