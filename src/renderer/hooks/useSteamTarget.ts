@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import type { InstalledGame } from '../../shared/types';
+import type { InstalledGame } from '@/shared/types';
+
 import {
   clearStoredManualTarget,
   getStoredAppId,
@@ -65,6 +66,7 @@ export const useSteamTarget = (games: InstalledGame[]) => {
 
     if (restoredManual) {
       commit(restoredManual.steamappsPath, restoredManual.appId);
+
       return;
     }
 

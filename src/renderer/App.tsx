@@ -1,18 +1,24 @@
 import { useCallback, type FC } from 'react';
+
 import { AlertCircle, Lock, LockOpen, RefreshCw } from 'lucide-react';
 import { Toaster } from 'sonner';
-import type { AppManifest } from '../shared/types';
-import { TitleBar } from './components/TitleBar';
-import { AppButton } from './components/AppButton';
-import { GameSelect } from './components/GameSelect';
-import { ManifestInfo } from './components/ManifestInfo';
-import { cn } from './lib/cn';
-import { useSteamTarget } from './hooks/useSteamTarget';
-import { useInstalledGames } from './hooks/useInstalledGames';
-import { useManifest } from './hooks/useManifest';
-import { useManifestActions } from './hooks/useManifestActions';
-import { useQuitGuard } from './hooks/useQuitGuard';
-import { useBrowseAcf } from './hooks/useBrowseAcf';
+
+import type { AppManifest } from '@/shared/types';
+
+import { AppButton } from '@/renderer/components/AppButton';
+import { GameSelect } from '@/renderer/components/GameSelect';
+import { ManifestInfo } from '@/renderer/components/ManifestInfo';
+import { TitleBar } from '@/renderer/components/TitleBar';
+
+import { useBrowseAcf } from '@/renderer/hooks/useBrowseAcf';
+import { useInstalledGames } from '@/renderer/hooks/useInstalledGames';
+import { useManifest } from '@/renderer/hooks/useManifest';
+import { useManifestActions } from '@/renderer/hooks/useManifestActions';
+import { useQuitGuard } from '@/renderer/hooks/useQuitGuard';
+import { useSteamTarget } from '@/renderer/hooks/useSteamTarget';
+
+import { cn } from '@/renderer/lib/cn';
+
 export const App: FC = () => {
   const {
     games,

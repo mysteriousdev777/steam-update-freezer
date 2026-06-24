@@ -1,11 +1,15 @@
-import { dirname } from 'node:path';
 import { BrowserWindow, dialog, ipcMain } from 'electron';
-import { listInstalledGames } from './services/steamLibraries';
-import { parseManifestAppId, readManifest } from './services/acf';
-import { freezeManifest, restoreManifest, updateManifest } from './services/freezer';
-import { setUpdateUnblocked } from './services/closeGuard';
+
+import { dirname } from 'node:path';
+
+import type { PickAcfFileResult } from '@/shared/types';
+
+import { parseManifestAppId, readManifest } from '@/main/services/acf';
+import { setUpdateUnblocked } from '@/main/services/closeGuard';
+import { freezeManifest, restoreManifest, updateManifest } from '@/main/services/freezer';
+import { listInstalledGames } from '@/main/services/steamLibraries';
+
 import { logToFile } from './logger';
-import type { PickAcfFileResult } from '../shared/types';
 
 /**
  * Registers every `ipcMain.handle` channel — the main-process side of the preload bridge.

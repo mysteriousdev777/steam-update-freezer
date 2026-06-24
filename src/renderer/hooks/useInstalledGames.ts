@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import type { InstalledGame } from '../../shared/types';
+import type { InstalledGame } from '@/shared/types';
 
 /**
  * Owns the installed-games list for the picker: loads on mount, re-loads on `rescan`, and lets a

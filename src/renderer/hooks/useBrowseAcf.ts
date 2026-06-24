@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { showErrorToast } from '../lib/toast';
+import { showErrorToast } from '@/renderer/lib/toast';
 
 /**
  * Manual target for install paths the scan doesn't find: opens a native file picker for the

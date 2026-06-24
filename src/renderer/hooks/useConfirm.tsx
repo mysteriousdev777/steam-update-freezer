@@ -8,11 +8,14 @@ import {
   type FC,
   type ReactNode,
 } from 'react';
+
 import { AlertTriangle } from 'lucide-react';
 
-import type { ConfirmOptions } from '../../shared/types';
-import { AppButton } from '../components/AppButton';
-import { cn } from '../lib/cn';
+import type { ConfirmOptions } from '@/shared/types';
+
+import { AppButton } from '@/renderer/components/AppButton';
+
+import { cn } from '@/renderer/lib/cn';
 
 type ConfirmContextType = {
   confirm: (options: ConfirmOptions) => Promise<boolean>;

@@ -2,10 +2,10 @@
 // linting in the IDE (see AGENTS.md, "Linting"). This config is the source of truth for
 // the rules they see.
 import js from '@eslint/js';
+import prettierRecommended from 'eslint-plugin-prettier/recommended';
+import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-import reactHooks from 'eslint-plugin-react-hooks';
-import prettierRecommended from 'eslint-plugin-prettier/recommended';
 
 export default tseslint.config(
   // Never lint build output or dependencies.
@@ -39,6 +39,47 @@ export default tseslint.config(
       // Renderer is arrow-only; main/services keep `function` declarations for hoisting
       // (AGENTS.md → Function style).
       'func-style': ['error', 'expression'],
+      // Process boundary: renderer reaches main only via window.freezer — no direct Electron
+      // or main/ imports (AGENTS.md → Architecture). Covers type imports too.
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'electron',
+              message:
+                'Renderer must not import Electron — use window.freezer (AGENTS.md → Architecture).',
+            },
+          ],
+          patterns: [
+            {
+              group: ['@/main', '@/main/**', '**/main/**'],
+              message:
+                'Renderer must reach main only through window.freezer (AGENTS.md → Architecture).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // main/services must stay pure Node (no electron) so they unit-test without Electron
+  // (AGENTS.md → Architecture / Project structure).
+  {
+    files: ['src/main/services/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'electron',
+              message:
+                'services/ must stay pure Node — no electron import (AGENTS.md → Architecture).',
+            },
+          ],
+        },
+      ],
     },
   },
 

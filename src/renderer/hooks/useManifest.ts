@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import type { AppManifest } from '../../shared/types';
+import type { AppManifest } from '@/shared/types';
+
 import { useReadManifest } from './useReadManifest';
 
 /**

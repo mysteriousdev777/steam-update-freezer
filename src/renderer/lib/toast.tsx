@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
-import { SteamToast } from '../components/SteamToast';
+
+import { SteamToast } from '@/renderer/components/SteamToast';
 
 // Error toasts linger longer than the sonner default (~4s) so there's time to read them.
 const ERROR_TOAST_DURATION_MS = 8000;

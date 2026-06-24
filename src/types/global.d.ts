@@ -1,5 +1,5 @@
 // Global type augmentations.
-import type { FreezerApi } from '../shared/api';
+import type { FreezerApi } from '@/shared/api';
 
 declare global {
   interface Window {

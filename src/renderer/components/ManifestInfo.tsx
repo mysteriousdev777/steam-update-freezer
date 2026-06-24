@@ -1,9 +1,12 @@
-import { useState, useEffect, useRef, type FC } from 'react';
+import { useEffect, useRef, useState, type FC } from 'react';
+
 import { ChevronRight, RefreshCw } from 'lucide-react';
 
-import { cn } from '../lib/cn';
+import type { AppManifest } from '@/shared/types';
+
+import { cn } from '@/renderer/lib/cn';
+
 import { AppButton } from './AppButton';
-import type { AppManifest } from '../../shared/types';
 
 type ManifestInfoProps = {
   manifest: AppManifest;

@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 
-import type { AppManifest } from '../../shared/types';
-import { showErrorToast, showSuccessToast } from '../lib/toast';
+import type { AppManifest } from '@/shared/types';
+
+import { showErrorToast, showSuccessToast } from '@/renderer/lib/toast';
+
 import { useConfirm } from './useConfirm';
 import { useFreezeManifest } from './useFreezeManifest';
 import { useRestoreManifest } from './useRestoreManifest';

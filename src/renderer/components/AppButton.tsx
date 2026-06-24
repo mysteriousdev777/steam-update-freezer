@@ -1,7 +1,8 @@
 import { type ButtonHTMLAttributes, type FC } from 'react';
+
 import { LoaderCircle, type LucideIcon } from 'lucide-react';
 
-import { cn } from '../lib/cn';
+import { cn } from '@/renderer/lib/cn';
 
 type AppButtonProps = {
   // Every button usually carries an icon; icon-only buttons omit children.

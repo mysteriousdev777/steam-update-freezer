@@ -1,7 +1,8 @@
 import { chmod, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { AcfError, AcfResult, AcfUpdateResult, AcfWriteResult } from '../../shared/types';
+import type { AcfError, AcfResult, AcfUpdateResult, AcfWriteResult } from '@/shared/types';
+
 import { manifestFileName, readManifest } from './acf';
 import { fetchPublicBuildInfo } from './steamApi';
 import { isSteamRunning } from './steamWatch';

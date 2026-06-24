@@ -80,6 +80,7 @@ sandbox). Rationale is reliability/testability, not security.
   forwarding to `ipcRenderer.invoke`. No Node logic in preload.
 - The **renderer** reaches main only through `window.freezer`. No direct
   `fs` / `child_process` / Node usage in the renderer.
+- **Process Boundaries (Lint-enforced):** The renderer cannot import `electron` or `main/` (use `window.freezer` instead). `main/services/*` cannot import `electron` (keep them pure Node). Never bypass these seams with direct imports.
 
 Adding a bridge method (the pattern):
 
@@ -138,6 +139,13 @@ Rules:
 - All ambient/global `.d.ts` (`declare module` / `declare global`) live in `src/types/`,
   grouped by kind (`assets` / `vendor` / `global`) — never colocated next to source, since
   ambient declarations apply globally regardless of file location.
+- **`@/*` path alias (`@/` → `src/`):** Use the root alias for **all** imports outside the current
+  directory (e.g., `@/shared/types` or `@/main/services/vdf`). Declared in `tsconfig.json`
+  (`paths`, for the IDE) **and** both webpack configs (`resolve.alias`) — `ts-loader` is
+  transpile-only, so tsconfig `paths` alone don't rewrite the emitted JS; webpack must resolve
+  the alias too. Only same-directory sibling imports stay relative (`./`); **do not use `../`**.
+  The alias does **not** loosen process boundaries — those stay lint-enforced (see Architecture);
+  `@/main` from the renderer is an error, not a shortcut.
 
 All `services/` modules now exist; this is the agreed layout.
 
@@ -176,6 +184,7 @@ All `services/` modules now exist; this is the agreed layout.
 - **Class names:** compose with the `cn()` helper (`src/renderer/lib/cn.ts`; clsx +
   tailwind-merge), not template strings — required when classes are conditional or a
   `className` prop can override defaults.
+- **Import order:** sorted automatically by `@ianvs/prettier-plugin-sort-imports`. Don't hand-order imports. The exact grouping and blank-line separation rules are defined in `.prettierrc.json`.
 - **Comments:** keep them compact — the shortest phrasing that preserves the meaning. Cut
   words that just restate the code; keep the intent, caveats, and non-obvious choices.
 - **Buttons:** use the `AppButton` component (`renderer/components/AppButton.tsx`) instead

@@ -1,10 +1,11 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, normalize } from 'node:path';
 
-import type { InstalledGame, InstalledGamesResult } from '../../shared/types';
-import { parseVdf } from './vdf';
+import type { InstalledGame, InstalledGamesResult } from '@/shared/types';
+
 import { parseManifestAppId, readManifest } from './acf';
 import { getSteamRootPath } from './steamPath';
+import { parseVdf } from './vdf';
 
 // libraryfolders.vdf lives alongside the main library's manifests.
 const getLibraryFoldersFile = (steamRootPath: string) =>

@@ -1,4 +1,5 @@
 import { type FC } from 'react';
+
 import { Minus, X } from 'lucide-react';
 
 import { AppButton } from './AppButton';

@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState, type FC } from 'react';
+
 import { Command } from 'cmdk';
 import { ChevronsUpDown, FolderOpen, Lock, Search, X } from 'lucide-react';
 
-import { cn } from '../lib/cn';
+import type { InstalledGame } from '@/shared/types';
+
+import { cn } from '@/renderer/lib/cn';
+
 import { AppButton } from './AppButton';
-import type { InstalledGame } from '../../shared/types';
 
 type GameSelectProps = {
   games: InstalledGame[];

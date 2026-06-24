@@ -1,4 +1,4 @@
-import type { AcfError } from '../../shared/types';
+import type { AcfError } from '@/shared/types';
 
 // The public Steam build data we need: build id + each depot's public manifest gid.
 type SteamBuildInfo = { buildId: string; depotManifests: Record<string, string> };

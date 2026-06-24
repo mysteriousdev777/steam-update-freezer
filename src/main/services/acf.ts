@@ -1,7 +1,8 @@
 import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { AcfError, AcfResult, AppManifest, InstalledDepot } from '../../shared/types';
+import type { AcfError, AcfResult, AppManifest, InstalledDepot } from '@/shared/types';
+
 import { parseVdf } from './vdf';
 
 export const manifestFileName = (appId: string) => `appmanifest_${appId}.acf`;
