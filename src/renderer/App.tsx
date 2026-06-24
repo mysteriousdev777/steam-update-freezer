@@ -45,14 +45,13 @@ export const App: FC = () => {
     [applyWriteResult, markGameReadonly, appId],
   );
 
-  const { busyAction, canWrite, canBlock, canUnblock, block, unblock, update } = useManifestActions(
-    {
+  const { busyAction, canBlock, canUnblock, canUpdate, block, unblock, update } =
+    useManifestActions({
       steamPath,
       appId,
       isManifestReadonly,
       applyWriteResult: handleWriteResult,
-    },
-  );
+    });
 
   useQuitGuard(isManifestReadonly === false);
 
@@ -143,9 +142,9 @@ export const App: FC = () => {
             icon={RefreshCw}
             isBusy={busyAction === 'update'}
             onClick={() => void update()}
-            disabled={!canWrite}
+            disabled={!canUpdate}
             className={actionClass(
-              canWrite,
+              canUpdate,
               'bg-[length:200%_auto] bg-right bg-gradient-to-r from-update-start via-update-start via-50% to-update-end text-white transition-[background-position] duration-300 hover:bg-left',
             )}
           >

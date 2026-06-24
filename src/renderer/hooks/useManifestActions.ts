@@ -36,6 +36,8 @@ export const useManifestActions = ({
   // Offer each toggle only when it would change the current state.
   const canBlock = canWrite && isManifestReadonly === false;
   const canUnblock = canWrite && isManifestReadonly === true;
+  // Frozen-only: on an unfrozen game the honest freeze is Block, not a rewrite to the public build.
+  const canUpdate = canWrite && isManifestReadonly === true;
 
   // Block: snapshot the genuine manifest to the backup, then lock read-only. Writes a backup, so
   // Steam must be closed — confirm first.
@@ -130,5 +132,5 @@ export const useManifestActions = ({
     }
   }, [confirm, updateManifest, steamPath, appId, applyWriteResult]);
 
-  return { busyAction, canWrite, canBlock, canUnblock, block, unblock, update };
+  return { busyAction, canWrite, canBlock, canUnblock, canUpdate, block, unblock, update };
 };
