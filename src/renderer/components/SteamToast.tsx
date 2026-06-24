@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { type FC } from 'react';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '../lib/cn';
 import appIcon from '../../../assets/metal_gamer_snowflake.png';

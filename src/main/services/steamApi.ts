@@ -8,7 +8,7 @@ export type SteamBuildInfoResult =
   | { ok: false; error: AcfError };
 
 // One attempt's outcome plus whether its failure is worth retrying.
-type Attempt = { result: SteamBuildInfoResult; retryable: boolean };
+type Attempt = { result: SteamBuildInfoResult; isRetryable: boolean };
 
 const STEAMCMD_API = 'https://api.steamcmd.net/v1/info';
 const TIMEOUT_MS = 10000;
@@ -30,9 +30,9 @@ export async function fetchPublicBuildInfo(appId: string): Promise<SteamBuildInf
   };
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const { result, retryable } = await attemptFetch(appId);
+    const { result, isRetryable } = await attemptFetch(appId);
 
-    if (result.ok || !retryable) return result;
+    if (result.ok || !isRetryable) return result;
 
     last = result;
 
@@ -58,7 +58,7 @@ async function attemptFetch(appId: string): Promise<Attempt> {
     const isTimeout = err instanceof Error && err.name === 'AbortError';
 
     return {
-      retryable: true,
+      isRetryable: true,
       result: {
         ok: false,
         error: {
@@ -75,7 +75,7 @@ async function attemptFetch(appId: string): Promise<Attempt> {
 
   if (!res.ok) {
     return {
-      retryable: res.status >= 500 || res.status === 429,
+      isRetryable: res.status >= 500 || res.status === 429,
       result: {
         ok: false,
         error: { kind: 'http', message: `Steam API returned HTTP ${res.status}.` },
@@ -89,7 +89,7 @@ async function attemptFetch(appId: string): Promise<Attempt> {
     json = await res.json();
   } catch (err) {
     return {
-      retryable: false,
+      isRetryable: false,
       result: {
         ok: false,
         error: { kind: 'parse', message: `Could not parse Steam API response: ${String(err)}` },
@@ -97,7 +97,7 @@ async function attemptFetch(appId: string): Promise<Attempt> {
     };
   }
 
-  return { retryable: false, result: extractBuildInfo(appId, json) };
+  return { isRetryable: false, result: extractBuildInfo(appId, json) };
 }
 
 // Pulls buildid (depots.branches.public.buildid) and each depot's public manifest gid

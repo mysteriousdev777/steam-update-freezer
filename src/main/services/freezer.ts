@@ -188,10 +188,10 @@ export async function updateManifest(
 
   // A read-only .acf is one we already froze, so its contents are a fake — backing it up would
   // overwrite the genuine original. A writable .acf is still genuine and safe to snapshot.
-  let wasFrozen = false;
+  let isAlreadyFrozen = false;
 
   try {
-    wasFrozen = ((await stat(file)).mode & 0o200) === 0;
+    isAlreadyFrozen = ((await stat(file)).mode & 0o200) === 0;
   } catch {
     // stat shouldn't fail right after a successful read; treat as not-frozen if it does.
   }
@@ -232,7 +232,7 @@ export async function updateManifest(
 
   const backup = `${file}.bak`;
 
-  if (!wasFrozen) {
+  if (!isAlreadyFrozen) {
     // Live manifest is still genuine — snapshot it (create or refresh) before the first rewrite.
     try {
       await writeFileAtomic(backup, text);
@@ -375,9 +375,9 @@ function isParseableManifest(text: string): boolean {
 }
 
 // Tags a manifest read with whether the update actually rewrote the file (false = already current).
-function withChanged(read: AcfResult, changed: boolean): AcfUpdateResult {
+function withChanged(read: AcfResult, isChanged: boolean): AcfUpdateResult {
   return read.ok
-    ? { ok: true, changed, manifest: read.manifest, isReadonly: read.isReadonly }
+    ? { ok: true, isChanged, manifest: read.manifest, isReadonly: read.isReadonly }
     : read;
 }
 

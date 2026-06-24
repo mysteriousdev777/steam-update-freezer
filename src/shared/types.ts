@@ -61,11 +61,11 @@ export type AcfWriteResult = { ok: true; isReadonly: boolean } | { ok: false; er
 
 /**
  * Outcome of the manifest update (rewrite to the current public build): the fresh on-disk manifest
- * plus whether it was actually rewritten (`changed: false` = already at the public build, nothing
+ * plus whether it was actually rewritten (`isChanged: false` = already at the public build, nothing
  * written), or a mapped error.
  */
 export type AcfUpdateResult =
-  | { ok: true; changed: boolean; manifest: AppManifest; isReadonly: boolean }
+  | { ok: true; isChanged: boolean; manifest: AppManifest; isReadonly: boolean }
   | { ok: false; error: AcfError };
 
 /** Outcome of the manual "browse for a manifest file" picker. */

@@ -109,7 +109,7 @@ export const useManifestActions = ({
       if (result.ok) {
         applyWriteResult({ manifest: result.manifest, isReadonly: result.isReadonly });
 
-        if (result.changed) {
+        if (result.isChanged) {
           showSuccessToast(
             `Manifest updated to build ${result.manifest.buildId} — updates blocked.`,
           );

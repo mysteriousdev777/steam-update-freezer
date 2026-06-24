@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
-import started from 'electron-squirrel-startup';
+import isSquirrelStartup from 'electron-squirrel-startup';
 import path from 'path';
 import { registerIpcHandlers } from './ipc';
 import { isUpdateCurrentlyUnblocked } from './services/closeGuard';
@@ -11,7 +11,7 @@ declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (started) {
+if (isSquirrelStartup) {
   app.quit();
 }
 

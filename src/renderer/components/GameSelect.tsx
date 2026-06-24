@@ -3,6 +3,7 @@ import { Command } from 'cmdk';
 import { ChevronsUpDown, FolderOpen, Lock, Search, X } from 'lucide-react';
 
 import { cn } from '../lib/cn';
+import { AppButton } from './AppButton';
 import type { InstalledGame } from '../../shared/types';
 
 type GameSelectProps = {
@@ -106,14 +107,13 @@ export const GameSelect: FC<GameSelectProps> = ({
   // Manual-pick row, always visible regardless of search/empty state — not a Command.Item so
   // it's exempt from cmdk's filter.
   const browseAcfRow = (
-    <button
-      type="button"
+    <AppButton
+      icon={FolderOpen}
       onClick={browseAcf}
-      className="flex w-full cursor-pointer items-center gap-3 border-t border-steam-panel px-3 py-2 text-left text-steam-muted hover:text-steam-accent"
+      className="w-full gap-3 rounded-none border-t border-steam-panel px-3 py-2 text-left text-steam-muted hover:text-steam-accent"
     >
-      <FolderOpen className="size-4 shrink-0" />
-      <span>Select manifest file manually…</span>
-    </button>
+      Select manifest file manually…
+    </AppButton>
   );
 
   return (
@@ -172,17 +172,15 @@ export const GameSelect: FC<GameSelectProps> = ({
                   className="flex-1 bg-transparent py-2 text-steam-text outline-none placeholder:text-steam-muted"
                 />
                 {search && (
-                  <button
-                    type="button"
+                  <AppButton
+                    icon={X}
                     onClick={() => {
                       setSearch('');
                       inputRef.current?.focus();
                     }}
                     aria-label="Clear search"
-                    className="shrink-0 cursor-pointer text-steam-muted hover:text-steam-text"
-                  >
-                    <X className="size-4" />
-                  </button>
+                    className="shrink-0 text-steam-muted hover:text-steam-text"
+                  />
                 )}
               </div>
 

@@ -165,6 +165,10 @@ All `services/` modules now exist; this is the agreed layout.
 - **React components** are arrow functions typed with `FC`:
   `const Foo: FC<FooProps> = (props) => { ... }` — bare `FC` (no type args) when the
   component takes no props. Import it as a type: `import { ..., type FC } from 'react'`.
+- **Function style:** renderer code (components, hooks, `lib/` helpers) is arrow-only — no
+  `function` declarations. In `main/`/`services/`, `function` declarations are fine and preferred
+  when a module reads top-down (entry function first, helpers below via hoisting); arrows otherwise.
+  Callbacks are always arrows.
 - **Class names:** compose with the `cn()` helper (`src/renderer/lib/cn.ts`; clsx +
   tailwind-merge), not template strings — required when classes are conditional or a
   `className` prop can override defaults.

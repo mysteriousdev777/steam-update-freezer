@@ -36,6 +36,9 @@ export default tseslint.config(
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       'react-hooks/set-state-in-effect': 'off',
+      // Renderer is arrow-only; main/services keep `function` declarations for hoisting
+      // (AGENTS.md → Function style).
+      'func-style': ['error', 'expression'],
     },
   },
 
@@ -52,6 +55,8 @@ export default tseslint.config(
         { blankLine: 'always', prev: '*', next: ['return', 'if'] },
         { blankLine: 'always', prev: 'if', next: '*' },
       ],
+      // Callbacks are always arrows (AGENTS.md → Function style).
+      'prefer-arrow-callback': 'error',
       'prettier/prettier': 'warn',
     },
   },
