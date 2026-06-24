@@ -25,53 +25,50 @@ ever lands in the code**.
 ## Commands & environment
 
 - Package manager: **pnpm**.
-- `pnpm start` — run the app in dev (electron-forge). Long-running, watch mode.
+- `pnpm start` — run the app in dev (electron-forge); long-running watch mode. Maintainer-run — see below.
 - `pnpm run make` — package/build the app.
-- `pnpm run lint` — ESLint (flat config, `eslint.config.mjs`). Maintainer-run (see "Linting").
+- `pnpm run lint` — ESLint (flat config, `eslint.config.mjs`). Maintainer-run — see below.
 
 Gotchas:
 
-- Forge's dev logger binds **port 9000** — only **one** `pnpm start` at a time, or it
-  fails with `EADDRINUSE :::9000`.
-- **Main-process** changes need a full restart (`Ctrl+C` then `pnpm start`); the renderer
-  hot-reloads on its own.
-- The app needs **Administrator** rights to write Steam files under `Program Files`. In
-  dev, launch the terminal "As Administrator"; in prod it ships with
-  `requireAdministrator`.
+- The **renderer** (`src/renderer/`) hot-reloads on its own. Everything else bundled into the
+  running app — **main process** (`src/main/`), **preload** (`src/preload/`), and build config
+  (`forge.config.ts` / `webpack.*`) — only takes effect after the dev server restarts. So after
+  editing any of those, end the reply with a bold blockquote callout so the maintainer can't miss
+  it in the chat flow (Antigravity's renderer doesn't style GitHub `[!WARNING]` alerts, so use
+  emoji + bold, not that syntax):
 
-## Git
+  ```
+  > 🔄 **ACTION NEEDED** — restart the dev server (`pnpm start`); this change isn't live until then.
+  ```
+- **No elevation is requested** (dev or prod): Electron runs `asInvoker` (no execution-level
+  manifest in `forge.config.ts`) — no UAC prompt. Writes to Steam files normally just work, as
+  Steam's install folder is user-writable (it self-updates without admin). On `EPERM`/`EACCES`
+  (a locked-down path), `freezer.ts` only surfaces an informational "Run as Administrator" toast;
+  the app never self-elevates — admin is the user's fallback, not a precondition.
 
-The maintainer manages git. **Do not run git commands** — `git status`, `git check-ignore`,
-`git add`, `git commit`, `git diff`, tracking checks, etc. — unless a task explicitly asks
-for git work. Create/edit files as the task needs and leave all git operations to the user.
+## Maintainer-owned — don't run these
 
-## Dependencies
+Write code that's correct, typed, and lint-clean, but leave verification, VCS, and dependency
+steps to the maintainer. **Don't run** the commands below — when one is needed, give the exact
+command and let the maintainer run it.
 
-The maintainer installs dependencies. **Do not run** `pnpm add` / `pnpm install` /
-`pnpm remove` — when a task needs a package, give the exact command and let them run it.
+| Area          | Don't run                                  | Instead                                                                                       |
+| ------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Git           | `git status` / `add` / `commit` / `diff` … | Create/edit files only; leave all VCS to the maintainer — unless a task explicitly asks for git work. |
+| Dependencies  | `pnpm add` / `install` / `remove`          | Hand over the exact command to run.                                                           |
+| Dev server    | `pnpm start`                               | The maintainer keeps it running and verifies the app (watch mode). Renderer hot-reloads; flag any non-renderer change (main / preload / build config) with a bold 🔄 callout so they restart it. |
+| Type checking | `tsc` / `pnpm exec tsc --noEmit`           | Write correctly-typed code; the maintainer checks types in the IDE.                           |
+| Linting       | `pnpm run lint` / `eslint`                 | Follow the configured rules; the maintainer lints in the IDE.                                 |
+| Tests         | any test runner (vitest / jest / …)        | There are none — don't add one or write test files; the maintainer verifies manually by running the app. |
 
-## Type checking
+Why these are set up this way:
 
-Do not run type checks — don't invoke `tsc` / `pnpm exec tsc --noEmit` (or any equivalent).
-The maintainer reviews type correctness in the IDE. Write correctly-typed code, but leave
-type verification to them.
-
-The webpack build is **transpile-only** by design: `ts-loader` runs with `transpileOnly: true`
-and there is **no** `ForkTsCheckerWebpackPlugin` (`webpack.plugins.ts`). So type errors never
-fail the build or print to the terminal — don't re-add a build-time type-checker. (`strict`
-is on in `tsconfig.json` for IDE checking.)
-
-## Testing
-
-No automated tests in this project. Don't add a test runner (vitest/jest/etc.) or write
-test files; verification is manual (run the app and observe behavior).
-
-## Linting
-
-Don't run the linter — don't invoke `pnpm run lint` / `eslint`. The maintainer controls
-linting in the IDE. Write code that follows the configured rules, but leave running the
-linter to them. (ESLint 9 flat config in `eslint.config.mjs`; Prettier runs through ESLint
-via `eslint-plugin-prettier`, style in `.prettierrc.json`.)
+- **Transpile-only build (don't re-add a type-checker):** `ts-loader` runs `transpileOnly: true`
+  and there is **no** `ForkTsCheckerWebpackPlugin` (`webpack.plugins.ts`), so type errors never
+  fail the build or print to the terminal. `strict` is on in `tsconfig.json` for IDE checking.
+- **Lint/format:** ESLint 9 flat config (`eslint.config.mjs`); Prettier runs through ESLint via
+  `eslint-plugin-prettier`, style in `.prettierrc.json`.
 
 ## Architecture
 
@@ -100,9 +97,11 @@ src/
     windowState.ts      # persist/restore main-window bounds (electron glue: app/screen/BrowserWindow)
     services/           # domain logic — plain Node, no `import 'electron'`, unit-testable
       acf.ts            #   read/parse appmanifest_<appId>.acf (via ./vdf)
+      closeGuard.ts     #   "update unblocked" flag for the quit-confirm guard (main/index.ts close handler)
       freezer.ts        #   freeze (snapshot+lock), manifest rewrite, unfreeze restore (atomic writes, backup, Steam-closed guard)
       steamApi.ts       #   public buildid + depot manifests from api.steamcmd.net
-      steamPath.ts      #   default steamapps path from the Windows registry (reg query)
+      steamLibraries.ts #   list installed games across all Steam libraries (registry + libraryfolders.vdf)
+      steamPath.ts      #   Steam install root from the registry (SteamPath, reg query); base for steamapps
       steamWatch.ts     #   is Steam running? (tasklist) — write guard
       vdf.ts            #   vendored Valve VDF parse/stringify (lossless: values stay raw strings)
   preload/
@@ -156,7 +155,7 @@ All `services/` modules now exist; this is the agreed layout.
 - UI: React 19 + Tailwind v4 (renderer only). Tailwind runs via PostCSS
   (`postcss.config.js` → `@tailwindcss/postcss`); Steam-palette theme tokens live in
   `src/renderer/index.css` (`@theme`); JSX is enabled by `tsconfig` `"jsx": "react-jsx"`.
-- Toasts: `sonner` for operation-status feedback. Wrapped in `renderer/lib/toast.ts` as
+- Toasts: `sonner` for operation-status feedback. Wrapped in `renderer/lib/toast.tsx` as
   `showSuccessToast` / `showErrorToast`; `<Toaster/>` is mounted in `App.tsx`.
 
 ## Code conventions
@@ -180,14 +179,19 @@ All `services/` modules now exist; this is the agreed layout.
 
 - Steam must be **fully closed** for every action that touches `.acf`/`.acf.bak` — **Block**,
   **Update**, and the **unfreeze restore** (Steam holds state in memory and overwrites on exit).
-- **Freezing always snapshots first:** both **Block** and **Update** write the **genuine original**
-  to `.acf.bak` before locking/rewriting, so a frozen (read-only) `.acf` **always** has a backup
-  holding the version that matches the files on disk. If the backup write fails, **do not freeze**
-  (no backup → no lock/write).
-- **Never overwrite the backup while the manifest is frozen** — re-faking across builds must keep
-  the existing `.bak` (replacing it with a later fake loses the only correct base for a SteamPipe
-  delta on unfreeze and the sole recovery source). A frozen manifest with **no** backup is only
-  reachable by external deletion: **abort the update** rather than snapshot a fake as "genuine".
+- **Freezing always snapshots the genuine original first.** On the unfrozen → frozen transition the
+  current (genuine) `.acf` is written to `.acf.bak` before the `.acf` is locked/rewritten — so a
+  frozen (read-only) `.acf` **always** has a backup matching the files on disk. **Block** snapshots
+  the unfrozen manifest it locks; **Update** snapshots only when the live `.acf` is still genuine
+  (unfrozen), and preserves the existing `.bak` when it's already frozen (next rule). If the backup
+  write fails, **do not freeze** (no backup → no lock/write).
+- **Never snapshot `.bak` from a frozen `.acf`** — its contents may be a fake, so both writers
+  refuse this at the service level, not just via the UI gate: **Update** keeps the existing `.bak`
+  when re-faking across builds (a later fake loses the only correct base for a SteamPipe delta on
+  unfreeze and the sole recovery source), and **Block** bails idempotently when the `.acf` is already
+  read-only. A frozen manifest with **no** backup is only reachable by external deletion: **Update
+  aborts** rather than snapshot a fake as "genuine" — unblock first to get a writable genuine
+  manifest a fresh freeze can re-snapshot.
 - Write `.acf` and `.acf.bak` **atomically** (temp file + `rename`) so a crash mid-write can't leave
   a truncated manifest.
 - **Unfreeze restores** the genuine manifest from `.acf.bak`, then clears read-only and removes the
