@@ -32,6 +32,7 @@ const api: FreezerApi = {
   getAppInfo: () => ipcRenderer.invoke('getAppInfo'),
   restoreDefaultWindowSize: () => ipcRenderer.invoke('restoreDefaultWindowSize'),
   openExternal: url => ipcRenderer.invoke('openExternal', url),
+  trackEvent: (eventName, props) => ipcRenderer.invoke('trackEvent', eventName, props),
 };
 
 contextBridge.exposeInMainWorld('freezer', api);

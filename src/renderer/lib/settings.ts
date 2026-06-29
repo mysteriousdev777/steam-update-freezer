@@ -82,3 +82,15 @@ export const setStoredConfirmation = (key: ConfirmationKey, isEnabled: boolean):
     CONFIRMATIONS_KEY,
     JSON.stringify({ ...getStoredConfirmations(), [key]: isEnabled }),
   );
+
+// Analytics opt-out (Settings -> Privacy). Stored as the stringified boolean; defaults on, so only
+// an explicit 'false' disables it. Read directly at each track site (useAnalytics) so a fresh toggle
+// takes effect immediately, with no React state to thread through.
+const TELEMETRY_KEY = 'freezer.telemetryEnabled';
+
+/** Whether anonymous usage analytics are enabled (default true; only explicit opt-out turns it off). */
+export const getStoredTelemetryEnabled = (): boolean => storage.read(TELEMETRY_KEY) !== 'false';
+
+/** Persists the analytics opt-out preference. */
+export const setStoredTelemetryEnabled = (isEnabled: boolean): void =>
+  storage.write(TELEMETRY_KEY, String(isEnabled));

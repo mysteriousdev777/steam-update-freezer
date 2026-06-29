@@ -33,6 +33,7 @@
     "@types/react-dom": "^19.2.3",
     "@vercel/webpack-asset-relocator-loader": "1.7.3",
     "css-loader": "^6.11.0",
+    "dotenv": "^17.4.2",
     "electron": "42.4.0",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^9.1.2",
@@ -50,6 +51,7 @@
     "typescript-eslint": "^8.61.1"
   },
   "dependencies": {
+    "@aptabase/electron": "^0.3.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "electron-squirrel-startup": "^1.0.1",

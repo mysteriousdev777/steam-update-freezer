@@ -18,11 +18,12 @@
   --color-steam-scrollbar-hover: #525862;
 
   /* Action-button colors */
-  --color-action-freeze: #5c7e10;
+  --color-action-freeze-start: #70d61d;
+  --color-action-freeze-end: #01a75b;
   --color-action-unfreeze: #e06363;
   --color-action-unfreeze-hover: #f54b4b;
-  --color-update-start: #06bfff;
-  --color-update-end: #2b74ff;
+  --color-action-update-start: #06bfff;
+  --color-action-update-end: #2b74ff;
 }
 
 @layer base {

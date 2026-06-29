@@ -18,6 +18,8 @@ import { useManifest } from '@/renderer/hooks/useManifest';
 import { useManifestActions } from '@/renderer/hooks/useManifestActions';
 import { useQuitGuard } from '@/renderer/hooks/useQuitGuard';
 import { useSteamTarget } from '@/renderer/hooks/useSteamTarget';
+import { useTelemetrySettings } from '@/renderer/hooks/useTelemetrySettings';
+import { useTrackAppOpen } from '@/renderer/hooks/useTrackAppOpen';
 
 import { cn } from '@/renderer/lib/cn';
 
@@ -28,6 +30,9 @@ export const App: FC = () => {
   // Quit guard reacts to the live `quit` toggle even while
   // the Settings view is open — App stays mounted across the view swap.
   const { confirmations, setConfirmation } = useConfirmationSettings();
+  const { isTelemetryEnabled, setTelemetryEnabled } = useTelemetrySettings();
+
+  useTrackAppOpen();
 
   const {
     games,
@@ -85,6 +90,8 @@ export const App: FC = () => {
           onBack={() => setView('main')}
           confirmations={confirmations}
           setConfirmation={setConfirmation}
+          isTelemetryEnabled={isTelemetryEnabled}
+          setTelemetryEnabled={setTelemetryEnabled}
         />
       ) : (
         <main className="flex-1 overflow-y-auto flex flex-col gap-4 p-6">
@@ -155,7 +162,7 @@ export const App: FC = () => {
               disabled={!canBlock}
               className={actionClass(
                 canBlock,
-                'bg-action-freeze text-white transition-colors duration-200 hover:bg-steam-ok',
+                'bg-gradient-to-r from-action-freeze-start to-action-freeze-end to-[60%] bg-[length:330%_100%] bg-[position:25%] hover:bg-[position:0%] text-white transition-all duration-200 ease-[ease]',
               )}
             >
               Block updates
@@ -168,7 +175,7 @@ export const App: FC = () => {
               disabled={!canUpdate}
               className={actionClass(
                 canUpdate,
-                'bg-[length:200%_auto] bg-right bg-gradient-to-r from-update-start via-update-start via-50% to-update-end text-white transition-[background-position] duration-300 hover:bg-left',
+                'bg-[length:200%_auto] bg-right bg-gradient-to-r from-action-update-start via-action-update-start via-50% to-action-update-end text-white transition-[background-position] duration-300 hover:bg-left',
               )}
             >
               Update manifest

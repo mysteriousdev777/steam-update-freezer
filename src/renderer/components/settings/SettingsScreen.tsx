@@ -14,6 +14,8 @@ type SettingsScreenProps = {
   onBack: () => void;
   confirmations: ConfirmationSettings;
   setConfirmation: (key: ConfirmationKey, isEnabled: boolean) => void;
+  isTelemetryEnabled: boolean;
+  setTelemetryEnabled: (isEnabled: boolean) => void;
 };
 
 type SettingsTabKey = 'settings' | 'about';
@@ -29,6 +31,8 @@ export const SettingsScreen: FC<SettingsScreenProps> = ({
   onBack,
   confirmations,
   setConfirmation,
+  isTelemetryEnabled,
+  setTelemetryEnabled,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTabKey>('settings');
   const activeLabel = TABS.find(tab => tab.key === activeTab)?.label ?? '';
@@ -70,7 +74,12 @@ export const SettingsScreen: FC<SettingsScreenProps> = ({
       <div className="flex-1 overflow-y-auto p-6">
         <h1 className="mb-6 text-xl font-bold">{activeLabel}</h1>
         {activeTab === 'settings' ? (
-          <SettingsTab confirmations={confirmations} setConfirmation={setConfirmation} />
+          <SettingsTab
+            confirmations={confirmations}
+            setConfirmation={setConfirmation}
+            isTelemetryEnabled={isTelemetryEnabled}
+            setTelemetryEnabled={setTelemetryEnabled}
+          />
         ) : (
           <AboutTab />
         )}

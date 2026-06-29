@@ -46,12 +46,12 @@ export const QuickGuide: FC = () => {
             <li className="leading-relaxed">
               <span className="text-steam-muted mr-1.5">•</span>
               To stop Steam from updating a game — select it from the list and click{' '}
-              <span className="font-semibold text-steam-ok">Block updates</span>.
+              <span className="font-semibold text-action-freeze-start">Block updates</span>.
             </li>
             <li className="leading-relaxed">
               <span className="text-steam-muted mr-1.5">•</span>
               When a patch comes out and Steam won't let the blocked game launch — click{' '}
-              <span className="font-semibold text-update-start">Update manifest</span>.
+              <span className="font-semibold text-action-update-start">Update manifest</span>.
             </li>
             <li className="leading-relaxed">
               <span className="text-steam-muted mr-1.5">•</span>

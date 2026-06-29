@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 
 import { dirname } from 'node:path';
 
-import type { AppInfo, PickAcfFileResult } from '@/shared/types';
+import type { AnalyticsEvent, AnalyticsProps, AppInfo, PickAcfFileResult } from '@/shared/types';
 
 import { parseManifestAppId, readManifest } from '@/main/services/acf';
 import { setQuitGuardEnabled } from '@/main/services/closeGuard';
@@ -10,6 +10,7 @@ import { freezeManifest, restoreManifest, updateManifest } from '@/main/services
 import { listInstalledGames } from '@/main/services/steamLibraries';
 
 import packageJson from '../../package.json';
+import { trackEvent } from './analytics';
 import { logToFile } from './logger';
 import { DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH } from './windowState';
 
@@ -119,5 +120,11 @@ export function registerIpcHandlers(): void {
     if (!/^https:\/\//.test(url)) return;
 
     return shell.openExternal(url);
+  });
+
+  // Analytics: forwards a renderer event to Aptabase. The renderer only calls this when the user
+  // hasn't opted out (Settings -> Privacy); main additionally no-ops when no key is configured.
+  ipcMain.handle('trackEvent', (_event, eventName: AnalyticsEvent, props?: AnalyticsProps) => {
+    trackEvent(eventName, props);
   });
 }

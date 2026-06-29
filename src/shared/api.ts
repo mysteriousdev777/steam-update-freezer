@@ -6,6 +6,8 @@ import type {
   AcfResult,
   AcfUpdateResult,
   AcfWriteResult,
+  AnalyticsEvent,
+  AnalyticsProps,
   AppInfo,
   InstalledGamesResult,
   PickAcfFileResult,
@@ -67,4 +69,8 @@ export type FreezerApi = {
 
   /** Opens an https URL in the OS default browser (About screen links) — never in-app. */
   openExternal: (url: string) => Promise<void>;
+
+  /** Sends an anonymous analytics event to Aptabase via main. No-op in unofficial builds (no key);
+   * the renderer also gates on the user's opt-out (Settings -> Privacy) before calling. */
+  trackEvent: (eventName: AnalyticsEvent, props?: AnalyticsProps) => Promise<void>;
 };

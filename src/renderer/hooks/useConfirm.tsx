@@ -91,7 +91,7 @@ export const ConfirmProvider: FC<{ children: ReactNode }> = ({ children }) => {
                   'px-6 py-2.5 text-[14px] font-medium text-white transition-all rounded-[2px]',
                   isDanger
                     ? 'bg-action-unfreeze hover:brightness-110'
-                    : 'bg-action-freeze hover:brightness-110',
+                    : 'bg-steam-ok hover:brightness-110',
                 )}
               >
                 {options.confirmLabel || 'Confirm'}

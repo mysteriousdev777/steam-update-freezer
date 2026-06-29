@@ -91,3 +91,9 @@ export type ConfirmationKey = 'block' | 'update' | 'unblock' | 'quit';
 
 /** Persisted "ask before this action" preferences (Settings -> Confirmations). */
 export type ConfirmationSettings = Record<ConfirmationKey, boolean>;
+
+/** Analytics event names we emit (Aptabase) — centralized so call sites stay typo-safe. */
+export type AnalyticsEvent = 'app_opened' | 'manifest_updated';
+
+/** Custom properties attached to an analytics event (Aptabase accepts string/number/boolean). */
+export type AnalyticsProps = Record<string, string | number | boolean>;

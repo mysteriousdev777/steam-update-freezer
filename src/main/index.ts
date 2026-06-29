@@ -5,6 +5,8 @@ import path from 'path';
 
 import { isQuitGuardEnabled } from '@/main/services/closeGuard';
 
+import packageJson from '../../package.json';
+import { initAnalytics } from './analytics';
 import { registerIpcHandlers } from './ipc';
 import { logToFile } from './logger';
 import { createWindowState, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH } from './windowState';
@@ -17,6 +19,11 @@ declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (isSquirrelStartup) {
   app.quit();
+}
+
+// Isolate dev data (localStorage, Settings, etc.) from the packaged production build.
+if (!app.isPackaged) {
+  app.setName(`${packageJson.name}-dev`);
 }
 
 // Our listener overrides Node's default termination, so exit ourselves — resuming after an
@@ -109,6 +116,9 @@ const createWindow = (): void => {
     mainWindow.webContents.send('request-quit-confirm');
   });
 };
+
+// Aptabase must be initialized before the app 'ready' event (SDK requirement); no-op without a key.
+initAnalytics();
 
 // Register the main-process side of the preload bridge before any window loads.
 registerIpcHandlers();

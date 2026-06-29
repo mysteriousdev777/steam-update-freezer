@@ -4,6 +4,7 @@ import type { AppManifest, ConfirmationSettings, ConfirmOptions } from '@/shared
 
 import { showErrorToast, showSuccessToast } from '@/renderer/lib/toast';
 
+import { useAnalytics } from './useAnalytics';
 import { useConfirm } from './useConfirm';
 import { useFreezeManifest } from './useFreezeManifest';
 import { useRestoreManifest } from './useRestoreManifest';
@@ -33,6 +34,7 @@ export const useManifestActions = ({
   const restoreManifest = useRestoreManifest();
   const updateManifest = useUpdateManifest();
   const confirm = useConfirm();
+  const trackEvent = useAnalytics();
 
   // Show the confirm dialog only when this action's confirmation is enabled; otherwise proceed.
   // Gates the prompt, not the safety guard — Steam-closed checks still run in the service.
@@ -130,6 +132,14 @@ export const useManifestActions = ({
 
       if (result.ok) {
         applyWriteResult({ manifest: result.manifest, isReadonly: result.isReadonly });
+        // Anonymous product context: which game/build was pinned, and whether anything changed.
+        // Aptabase aggregates each property independently, so buildId is only meaningful paired with
+        // the game — hence the composite key (a standalone buildId across all games says nothing).
+        trackEvent('manifest_updated', {
+          name: result.manifest.name,
+          gameBuild: `${result.manifest.name} (${result.manifest.appId}) @ ${result.manifest.buildId}`,
+          isChanged: result.isChanged,
+        });
 
         if (result.isChanged) {
           showSuccessToast(
@@ -150,7 +160,15 @@ export const useManifestActions = ({
     } finally {
       setBusyAction(null);
     }
-  }, [confirmIfEnabled, confirmations.update, updateManifest, steamPath, appId, applyWriteResult]);
+  }, [
+    confirmIfEnabled,
+    confirmations.update,
+    updateManifest,
+    steamPath,
+    appId,
+    applyWriteResult,
+    trackEvent,
+  ]);
 
   return { busyAction, canWrite, canBlock, canUnblock, canUpdate, block, unblock, update };
 };
