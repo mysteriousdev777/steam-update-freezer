@@ -139,13 +139,14 @@ Rules:
 - All ambient/global `.d.ts` (`declare module` / `declare global`) live in `src/types/`,
   grouped by kind (`assets` / `vendor` / `global`) — never colocated next to source, since
   ambient declarations apply globally regardless of file location.
-- **`@/*` path alias (`@/` → `src/`):** Use the root alias for **all** imports outside the current
-  directory (e.g., `@/shared/types` or `@/main/services/vdf`). Declared in `tsconfig.json`
-  (`paths`, for the IDE) **and** both webpack configs (`resolve.alias`) — `ts-loader` is
-  transpile-only, so tsconfig `paths` alone don't rewrite the emitted JS; webpack must resolve
-  the alias too. Only same-directory sibling imports stay relative (`./`); **do not use `../`**.
-  The alias does **not** loosen process boundaries — those stay lint-enforced (see Architecture);
-  `@/main` from the renderer is an error, not a shortcut.
+- **`@/*` path alias (`@/` → `src/`):** Always alias `src/` imports — **including same-directory
+  siblings** (`@/main/services/vdf`, never `./vdf`); relative `./`/`../` is only for repo-root files
+  with no alias (e.g. `../../package.json`). Aliasing siblings too keeps the import-sort groups correct
+  (the plugin sorts by the literal path, so a relative sibling can't land in its real group). Declared
+  in `tsconfig.json` (`paths`, for the IDE) **and** both webpack configs (`resolve.alias`) — `ts-loader`
+  is transpile-only, so tsconfig `paths` alone don't rewrite the emitted JS; webpack must resolve it too.
+  The alias does **not** loosen process boundaries — those stay lint-enforced (see Architecture); `@/main`
+  from the renderer is an error, not a shortcut.
 - **`@assets/*` alias (`@assets/` → repo-root `assets/`):** import bundled assets from outside
   `src/` (e.g. `@assets/icon.png`), not `../../../assets/…`. In `tsconfig.json` + renderer webpack only.
 

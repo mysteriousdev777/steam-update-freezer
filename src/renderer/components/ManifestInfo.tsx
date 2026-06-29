@@ -4,9 +4,9 @@ import { ChevronRight, RefreshCw } from 'lucide-react';
 
 import type { AppManifest } from '@/shared/types';
 
-import { cn } from '@/renderer/lib/cn';
+import { AppButton } from '@/renderer/components/AppButton';
 
-import { AppButton } from './AppButton';
+import { cn } from '@/renderer/lib/cn';
 
 type ManifestInfoProps = {
   manifest: AppManifest;

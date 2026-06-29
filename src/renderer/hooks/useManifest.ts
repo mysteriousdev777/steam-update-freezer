@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import type { AppManifest } from '@/shared/types';
 
-import { useReadManifest } from './useReadManifest';
+import { useReadManifest } from '@/renderer/hooks/useReadManifest';
 
 /**
  * A committed read target. A fresh object on every commit (see useSteamTarget) so re-committing

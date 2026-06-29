@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import type { AcfError, AcfResult, AppManifest, InstalledDepot } from '@/shared/types';
 
-import { parseVdf } from './vdf';
+import { parseVdf } from '@/main/services/vdf';
 
 export const manifestFileName = (appId: string) => `appmanifest_${appId}.acf`;
 

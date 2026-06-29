@@ -81,6 +81,8 @@ export type AppInfo = { version: string; author: string };
 export type ConfirmOptions = {
   message: string;
   detail?: string;
+  // Lower-emphasis informational callout shown below `detail` (e.g. a safety caveat).
+  note?: string;
   variant?: 'default' | 'danger';
   confirmLabel?: string;
   cancelLabel?: string;

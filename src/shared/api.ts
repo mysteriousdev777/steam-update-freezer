@@ -11,7 +11,7 @@ import type {
   AppInfo,
   InstalledGamesResult,
   PickAcfFileResult,
-} from './types';
+} from '@/shared/types';
 
 export type FreezerApi = {
   /** Round-trip smoke test of the preload bridge. */

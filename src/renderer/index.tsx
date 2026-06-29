@@ -4,7 +4,7 @@
  * only through the `window.freezer` bridge that preload sets up. See AGENTS.md (Architecture).
  */
 
-import './index.css';
+import '@/renderer/index.css';
 
 import { StrictMode, type FC } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -14,7 +14,7 @@ import { ErrorBoundary } from '@/renderer/components/ErrorBoundary';
 import { ConfirmProvider } from '@/renderer/hooks/useConfirm';
 import { useRendererErrorReporting } from '@/renderer/hooks/useRendererErrorReporting';
 
-import { App } from './App';
+import { App } from '@/renderer/App';
 
 // Wires error reporting (the hook installs the global listeners and is the single window.freezer
 // seam) and wraps the app in the ErrorBoundary. Sits above the boundary, so it stays trivial —

@@ -2,14 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 
 import type { InstalledGame } from '@/shared/types';
 
+import type { ReadTarget } from '@/renderer/hooks/useManifest';
+
 import {
   clearStoredManualTarget,
   getStoredAppId,
   getStoredManualTarget,
   setStoredAppId,
   setStoredManualTarget,
-} from '../lib/settings';
-import type { ReadTarget } from './useManifest';
+} from '@/renderer/lib/settings';
 
 /**
  * Owns the read target: the selected game's library folder + App ID. Picking a game resolves both

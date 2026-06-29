@@ -3,10 +3,10 @@ import { join } from 'node:path';
 
 import type { AcfError, AcfResult, AcfUpdateResult, AcfWriteResult } from '@/shared/types';
 
-import { manifestFileName, readManifest } from './acf';
-import { fetchPublicBuildInfo } from './steamApi';
-import { isSteamRunning } from './steamWatch';
-import { parseVdf, stringifyVdf } from './vdf';
+import { manifestFileName, readManifest } from '@/main/services/acf';
+import { fetchPublicBuildInfo } from '@/main/services/steamApi';
+import { isSteamRunning } from '@/main/services/steamWatch';
+import { parseVdf, stringifyVdf } from '@/main/services/vdf';
 
 // Windows maps chmod to the read-only attribute: no write bits = read-only, write bits = writable.
 const READONLY_MODE = 0o444;

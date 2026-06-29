@@ -1,6 +1,6 @@
 import type { ConfirmationKey, ConfirmationSettings } from '@/shared/types';
 
-import { storage } from './storage';
+import { storage } from '@/renderer/lib/storage';
 
 // Persisted user inputs, one storage key per concern.
 

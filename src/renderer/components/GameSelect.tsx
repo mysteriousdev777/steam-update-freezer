@@ -5,9 +5,9 @@ import { ChevronsUpDown, FolderOpen, Lock, Search, X } from 'lucide-react';
 
 import type { InstalledGame } from '@/shared/types';
 
-import { cn } from '@/renderer/lib/cn';
+import { AppButton } from '@/renderer/components/AppButton';
 
-import { AppButton } from './AppButton';
+import { cn } from '@/renderer/lib/cn';
 
 type GameSelectProps = {
   games: InstalledGame[];

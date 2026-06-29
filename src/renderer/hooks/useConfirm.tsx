@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Info } from 'lucide-react';
 
 import type { ConfirmOptions } from '@/shared/types';
 
@@ -75,6 +75,12 @@ export const ConfirmProvider: FC<{ children: ReactNode }> = ({ children }) => {
               </h2>
               {options.detail && (
                 <p className="text-base text-steam-text leading-relaxed">{options.detail}</p>
+              )}
+              {options.note && (
+                <div className="mt-4 flex gap-2.5 rounded-[2px] border border-steam-accent/20 bg-steam-accent/5 px-3 py-2.5">
+                  <Info className="mt-0.5 size-4 shrink-0 text-steam-accent" />
+                  <p className="text-sm text-steam-label leading-relaxed">{options.note}</p>
+                </div>
               )}
             </div>
 

@@ -41,6 +41,8 @@
     "",
     "^[./]",
     "",
+    "^@assets/",
+    "",
     "^.+\\.css$"
   ],
   "importOrderParserPlugins": ["typescript", "jsx"]

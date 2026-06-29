@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
-import { useConfirm } from './useConfirm';
-import { useReportQuitGuard } from './useReportQuitGuard';
+import { useConfirm } from '@/renderer/hooks/useConfirm';
+import { useReportQuitGuard } from '@/renderer/hooks/useReportQuitGuard';
 
 /**
  * Guards quitting while updates are unblocked: reports to main whether a quit should be guarded

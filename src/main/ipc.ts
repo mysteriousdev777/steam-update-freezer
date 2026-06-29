@@ -9,10 +9,11 @@ import { setQuitGuardEnabled } from '@/main/services/closeGuard';
 import { freezeManifest, restoreManifest, updateManifest } from '@/main/services/freezer';
 import { listInstalledGames } from '@/main/services/steamLibraries';
 
+import { trackEvent } from '@/main/analytics';
+import { logToFile } from '@/main/logger';
+import { DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH } from '@/main/windowState';
+
 import packageJson from '../../package.json';
-import { trackEvent } from './analytics';
-import { logToFile } from './logger';
-import { DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH } from './windowState';
 
 /**
  * Registers every `ipcMain.handle` channel — the main-process side of the preload bridge.

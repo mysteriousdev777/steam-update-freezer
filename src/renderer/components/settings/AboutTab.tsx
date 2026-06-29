@@ -1,6 +1,5 @@
 import { type FC } from 'react';
 
-import appIcon from '@assets/metal_gamer_snowflake.png';
 import { Code2 } from 'lucide-react';
 
 import { AppButton } from '@/renderer/components/AppButton';
@@ -9,6 +8,8 @@ import { useAppInfo } from '@/renderer/hooks/useAppInfo';
 import { useOpenExternal } from '@/renderer/hooks/useOpenExternal';
 
 import { GITHUB_URL } from '@/renderer/lib/links';
+
+import appIcon from '@assets/metal_gamer_snowflake.png';
 
 export const AboutTab: FC = () => {
   const { version, author } = useAppInfo();

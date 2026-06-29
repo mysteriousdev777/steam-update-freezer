@@ -2,9 +2,9 @@ import { useEffect, useRef, useState, type FC } from 'react';
 
 import { CircleHelp, Info } from 'lucide-react';
 
-import { cn } from '@/renderer/lib/cn';
+import { AppButton } from '@/renderer/components/AppButton';
 
-import { AppButton } from './AppButton';
+import { cn } from '@/renderer/lib/cn';
 
 export const QuickGuide: FC = () => {
   const [isOpen, setIsOpen] = useState(false);

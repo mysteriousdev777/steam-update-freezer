@@ -87,7 +87,9 @@ export const SettingsTab: FC<SettingsTabProps> = ({
         </SectionHeading>
         <div className="flex flex-col divide-y divide-white/5 rounded border border-white/5 bg-black/20 px-4">
           <div className="flex items-center justify-between gap-4 py-3">
-            <span className="text-sm text-steam-text">Help improve the app with anonymous analytics</span>
+            <span className="text-sm text-steam-text">
+              Help improve the app with anonymous analytics
+            </span>
             <AppSwitch
               isChecked={isTelemetryEnabled}
               onCheckedChange={setTelemetryEnabled}

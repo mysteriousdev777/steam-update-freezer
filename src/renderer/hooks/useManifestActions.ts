@@ -2,13 +2,13 @@ import { useCallback, useState } from 'react';
 
 import type { AppManifest, ConfirmationSettings, ConfirmOptions } from '@/shared/types';
 
-import { showErrorToast, showSuccessToast } from '@/renderer/lib/toast';
+import { useAnalytics } from '@/renderer/hooks/useAnalytics';
+import { useConfirm } from '@/renderer/hooks/useConfirm';
+import { useFreezeManifest } from '@/renderer/hooks/useFreezeManifest';
+import { useRestoreManifest } from '@/renderer/hooks/useRestoreManifest';
+import { useUpdateManifest } from '@/renderer/hooks/useUpdateManifest';
 
-import { useAnalytics } from './useAnalytics';
-import { useConfirm } from './useConfirm';
-import { useFreezeManifest } from './useFreezeManifest';
-import { useRestoreManifest } from './useRestoreManifest';
-import { useUpdateManifest } from './useUpdateManifest';
+import { showErrorToast, showSuccessToast } from '@/renderer/lib/toast';
 
 type UseManifestActionsArgs = {
   steamPath: string;
@@ -59,7 +59,7 @@ export const useManifestActions = ({
     const isConfirmed = await confirmIfEnabled(confirmations.block, {
       message: 'Block game updates?',
       detail:
-        'Saves a backup of the current version (.acf.bak) and locks the manifest. Steam must be closed.',
+        'Locks the current manifest read-only so Steam stops updating this game. Your original is backed up first.',
     });
 
     if (!isConfirmed) return;
@@ -85,10 +85,11 @@ export const useManifestActions = ({
   // (restoring the true installed build so SteamPipe's delta stays correct), so Steam must be closed.
   const unblock = useCallback(async () => {
     const isConfirmed = await confirmIfEnabled(confirmations.unblock, {
-      message: 'Unblock game update?',
+      message: 'Unblock game updates?',
       variant: 'danger',
       detail:
-        'Restores the original manifest from the backup and lets Steam update this game again. Steam must be closed.',
+        'Restores the original manifest from the backup and unlocks it, so Steam can update this game again.',
+      note: "Edited this game's manifest files outside the app? The backup may not match what's installed — verify the game's files in Steam afterward.",
     });
 
     if (!isConfirmed) return;
@@ -121,7 +122,7 @@ export const useManifestActions = ({
     const isConfirmed = await confirmIfEnabled(confirmations.update, {
       message: 'Update manifest to the current public build?',
       detail:
-        'Rewrites the .acf and locks it read-only (a .acf.bak backup is made first). Steam must be closed.',
+        'Rewrites the manifest to the current public build and locks it, so Steam skips the pending update. Your original is backed up first.',
     });
 
     if (!isConfirmed) return;
@@ -146,11 +147,8 @@ export const useManifestActions = ({
             `Manifest updated to build ${result.manifest.buildId} — updates blocked.`,
           );
         } else {
-          // Nothing rewritten — already at the public build. Note the lock state as-is.
-          const lockNote = result.isReadonly ? ' — updates blocked' : '';
-          showSuccessToast(
-            `Already at the current public build ${result.manifest.buildId}${lockNote}.`,
-          );
+          // Nothing rewritten — the manifest already claims the current public build.
+          showSuccessToast(`Already at the current public build ${result.manifest.buildId}.`);
         }
       } else {
         showErrorToast(result.error.message);

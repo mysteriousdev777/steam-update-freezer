@@ -207,7 +207,7 @@ export const App: FC = () => {
           )}
         </main>
       )}
-      <Toaster theme="dark" position="top-right" offset={{ top: 48 }} />
+      <Toaster theme="dark" position="top-right" offset={{ top: 56 }} style={{ zIndex: 20 }} />
     </div>
   );
 };
