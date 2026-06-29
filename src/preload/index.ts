@@ -16,7 +16,7 @@ const api: FreezerApi = {
     ipcRenderer.invoke('updateManifest', steamappsPath, appId),
   restoreManifest: (steamappsPath, appId) =>
     ipcRenderer.invoke('restoreManifest', steamappsPath, appId),
-  reportUpdateUnblocked: isUnblocked => ipcRenderer.invoke('reportUpdateUnblocked', isUnblocked),
+  reportQuitGuard: isEnabled => ipcRenderer.invoke('reportQuitGuard', isEnabled),
   reportRendererError: (message, stack) =>
     ipcRenderer.invoke('reportRendererError', message, stack),
   onQuitRequest: callback => {
@@ -29,6 +29,9 @@ const api: FreezerApi = {
   confirmQuit: () => ipcRenderer.invoke('confirmQuit'),
   minimizeWindow: () => ipcRenderer.invoke('minimizeWindow'),
   closeWindow: () => ipcRenderer.invoke('closeWindow'),
+  getAppInfo: () => ipcRenderer.invoke('getAppInfo'),
+  restoreDefaultWindowSize: () => ipcRenderer.invoke('restoreDefaultWindowSize'),
+  openExternal: url => ipcRenderer.invoke('openExternal', url),
 };
 
 contextBridge.exposeInMainWorld('freezer', api);

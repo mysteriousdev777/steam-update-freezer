@@ -1,15 +1,17 @@
-import { BrowserWindow, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 
 import { dirname } from 'node:path';
 
-import type { PickAcfFileResult } from '@/shared/types';
+import type { AppInfo, PickAcfFileResult } from '@/shared/types';
 
 import { parseManifestAppId, readManifest } from '@/main/services/acf';
-import { setUpdateUnblocked } from '@/main/services/closeGuard';
+import { setQuitGuardEnabled } from '@/main/services/closeGuard';
 import { freezeManifest, restoreManifest, updateManifest } from '@/main/services/freezer';
 import { listInstalledGames } from '@/main/services/steamLibraries';
 
+import packageJson from '../../package.json';
 import { logToFile } from './logger';
+import { DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH } from './windowState';
 
 /**
  * Registers every `ipcMain.handle` channel — the main-process side of the preload bridge.
@@ -67,9 +69,10 @@ export function registerIpcHandlers(): void {
     restoreManifest(steamappsPath, appId),
   );
 
-  // Tracks unblocked state for the quit confirmation guard (see main/index.ts close handler).
-  ipcMain.handle('reportUpdateUnblocked', (_event, isUnblocked: boolean) => {
-    setUpdateUnblocked(isUnblocked);
+  // Whether a quit should be guarded by a confirmation (see main/index.ts close handler). The
+  // renderer combines "updates unblocked" with the user's quit confirmation preference.
+  ipcMain.handle('reportQuitGuard', (_event, isEnabled: boolean) => {
+    setQuitGuardEnabled(isEnabled);
   });
 
   // Appends a renderer-side error (ErrorBoundary catch or a global handler) to the same on-disk
@@ -85,5 +88,36 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('closeWindow', event => {
     BrowserWindow.fromWebContents(event.sender)?.close();
+  });
+
+  // About screen display metadata. Version comes from Electron (reads the packaged
+  // app's package.json); author isn't exposed by Electron's API, so read it directly.
+  ipcMain.handle(
+    'getAppInfo',
+    (): AppInfo => ({
+      version: app.getVersion(),
+      author: packageJson.author,
+    }),
+  );
+
+  // Settings -> Window -> Restore default window: un-maximize, reset to the default content size,
+  // and re-center — a recovery reset of both size and position (e.g. window stuck off-screen).
+  ipcMain.handle('restoreDefaultWindowSize', event => {
+    const window = BrowserWindow.fromWebContents(event.sender);
+
+    if (!window) return;
+
+    if (window.isMaximized()) window.unmaximize();
+
+    window.setContentSize(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
+    window.center();
+  });
+
+  // About screen external links. Restricted to https so the renderer can't be made to open an
+  // arbitrary protocol or a local file path through this channel.
+  ipcMain.handle('openExternal', (_event, url: string) => {
+    if (!/^https:\/\//.test(url)) return;
+
+    return shell.openExternal(url);
   });
 }

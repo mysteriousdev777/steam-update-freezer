@@ -1,15 +1,16 @@
 import { useEffect } from 'react';
 
 import { useConfirm } from './useConfirm';
-import { useReportUpdateUnblocked } from './useReportUpdateUnblocked';
+import { useReportQuitGuard } from './useReportQuitGuard';
 
 /**
- * Guards quitting while updates are unblocked: reports the state to main, and confirms with the
- * user when main intercepts a quit.
+ * Guards quitting while updates are unblocked: reports to main whether a quit should be guarded
+ * (updates unblocked AND the quit confirmation enabled), and confirms with the user when main
+ * intercepts a quit.
  */
-export const useQuitGuard = (isUpdateUnblocked: boolean) => {
+export const useQuitGuard = (isUpdateUnblocked: boolean, isQuitConfirmEnabled: boolean) => {
   const confirm = useConfirm();
-  const reportUpdateUnblocked = useReportUpdateUnblocked();
+  const reportQuitGuard = useReportQuitGuard();
 
   // Quit requests from main (updates unblocked). Cleanup unsubscribes, else re-registration leaks.
   useEffect(() => {
@@ -31,8 +32,8 @@ export const useQuitGuard = (isUpdateUnblocked: boolean) => {
     return unsubscribe;
   }, [confirm]);
 
-  // Keep main informed so it can guard a quit while unblocked.
+  // Guard a quit only when updates are unblocked AND the user kept the quit confirmation on.
   useEffect(() => {
-    void reportUpdateUnblocked(isUpdateUnblocked);
-  }, [isUpdateUnblocked, reportUpdateUnblocked]);
+    void reportQuitGuard(isUpdateUnblocked && isQuitConfirmEnabled);
+  }, [isUpdateUnblocked, isQuitConfirmEnabled, reportQuitGuard]);
 };

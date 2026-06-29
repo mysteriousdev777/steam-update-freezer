@@ -1,3 +1,5 @@
+import type { ConfirmationKey, ConfirmationSettings } from '@/shared/types';
+
 import { storage } from './storage';
 
 // Persisted user inputs, one storage key per concern.
@@ -45,3 +47,38 @@ export const setStoredManualTarget = (target: ManualTarget): void =>
 
 /** Clears the manual pick — called when a scanned game is selected instead. */
 export const clearStoredManualTarget = (): void => storage.remove(MANUAL_TARGET_KEY);
+
+// Per-action "ask before this" preferences (Settings -> Confirmations). Source of truth lives
+// here (renderer): block/update/unblock are consumed where the prompt is shown, and the quit
+// preference is folded into the signal useQuitGuard reports to main — so main needs no copy.
+const CONFIRMATIONS_KEY = 'freezer.confirmations';
+
+// All confirmations default on; merged over so a key added in a newer build stays enabled.
+const DEFAULT_CONFIRMATIONS: ConfirmationSettings = {
+  block: true,
+  update: true,
+  unblock: true,
+  quit: true,
+};
+
+/** The persisted confirmation preferences, with any missing/invalid key filled from the defaults. */
+export const getStoredConfirmations = (): ConfirmationSettings => {
+  const raw = storage.read(CONFIRMATIONS_KEY);
+
+  if (!raw) return { ...DEFAULT_CONFIRMATIONS };
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<ConfirmationSettings>;
+
+    return { ...DEFAULT_CONFIRMATIONS, ...parsed };
+  } catch {
+    return { ...DEFAULT_CONFIRMATIONS };
+  }
+};
+
+/** Persists a single confirmation toggle, preserving the others. */
+export const setStoredConfirmation = (key: ConfirmationKey, isEnabled: boolean): void =>
+  storage.write(
+    CONFIRMATIONS_KEY,
+    JSON.stringify({ ...getStoredConfirmations(), [key]: isEnabled }),
+  );

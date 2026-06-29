@@ -14,6 +14,10 @@ type WindowState = {
 // Minimum on-screen square (px per side) a restored window must keep visible.
 const MIN_VISIBLE = 64;
 
+// Default content size for a fresh install and for Settings -> Restore Default Window Size.
+export const DEFAULT_WINDOW_WIDTH = 1024;
+export const DEFAULT_WINDOW_HEIGHT = 720;
+
 export function createWindowState(defaultWidth: number, defaultHeight: number) {
   const stateFile = path.join(app.getPath('userData'), 'window-state.json');
   const state: WindowState = { width: defaultWidth, height: defaultHeight };

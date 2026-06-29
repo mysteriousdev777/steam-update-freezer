@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import type { AppManifest } from '@/shared/types';
+import type { AppManifest, ConfirmationSettings, ConfirmOptions } from '@/shared/types';
 
 import { showErrorToast, showSuccessToast } from '@/renderer/lib/toast';
 
@@ -14,6 +14,7 @@ type UseManifestActionsArgs = {
   appId: string;
   isManifestReadonly: boolean | null;
   applyWriteResult: (result: { manifest?: AppManifest; isReadonly: boolean }) => void;
+  confirmations: ConfirmationSettings;
 };
 
 /**
@@ -26,11 +27,20 @@ export const useManifestActions = ({
   appId,
   isManifestReadonly,
   applyWriteResult,
+  confirmations,
 }: UseManifestActionsArgs) => {
   const freezeManifest = useFreezeManifest();
   const restoreManifest = useRestoreManifest();
   const updateManifest = useUpdateManifest();
   const confirm = useConfirm();
+
+  // Show the confirm dialog only when this action's confirmation is enabled; otherwise proceed.
+  // Gates the prompt, not the safety guard — Steam-closed checks still run in the service.
+  const confirmIfEnabled = useCallback(
+    (isEnabled: boolean, options: ConfirmOptions): Promise<boolean> =>
+      isEnabled ? confirm(options) : Promise.resolve(true),
+    [confirm],
+  );
 
   const [busyAction, setBusyAction] = useState<'lock' | 'unlock' | 'update' | null>(null);
 
@@ -44,7 +54,7 @@ export const useManifestActions = ({
   // Block: snapshot the genuine manifest to the backup, then lock read-only. Writes a backup, so
   // Steam must be closed — confirm first.
   const block = useCallback(async () => {
-    const isConfirmed = await confirm({
+    const isConfirmed = await confirmIfEnabled(confirmations.block, {
       message: 'Block game updates?',
       detail:
         'Saves a backup of the current version (.acf.bak) and locks the manifest. Steam must be closed.',
@@ -67,13 +77,14 @@ export const useManifestActions = ({
     } finally {
       setBusyAction(null);
     }
-  }, [confirm, freezeManifest, steamPath, appId, applyWriteResult]);
+  }, [confirmIfEnabled, confirmations.block, freezeManifest, steamPath, appId, applyWriteResult]);
 
   // Unblock: restore the genuine manifest from the backup, then unlock. Rewrites the .acf
   // (restoring the true installed build so SteamPipe's delta stays correct), so Steam must be closed.
   const unblock = useCallback(async () => {
-    const isConfirmed = await confirm({
+    const isConfirmed = await confirmIfEnabled(confirmations.unblock, {
       message: 'Unblock game update?',
+      variant: 'danger',
       detail:
         'Restores the original manifest from the backup and lets Steam update this game again. Steam must be closed.',
     });
@@ -95,10 +106,17 @@ export const useManifestActions = ({
     } finally {
       setBusyAction(null);
     }
-  }, [confirm, restoreManifest, steamPath, appId, applyWriteResult]);
+  }, [
+    confirmIfEnabled,
+    confirmations.unblock,
+    restoreManifest,
+    steamPath,
+    appId,
+    applyWriteResult,
+  ]);
 
   const update = useCallback(async () => {
-    const isConfirmed = await confirm({
+    const isConfirmed = await confirmIfEnabled(confirmations.update, {
       message: 'Update manifest to the current public build?',
       detail:
         'Rewrites the .acf and locks it read-only (a .acf.bak backup is made first). Steam must be closed.',
@@ -132,7 +150,7 @@ export const useManifestActions = ({
     } finally {
       setBusyAction(null);
     }
-  }, [confirm, updateManifest, steamPath, appId, applyWriteResult]);
+  }, [confirmIfEnabled, confirmations.update, updateManifest, steamPath, appId, applyWriteResult]);
 
   return { busyAction, canWrite, canBlock, canUnblock, canUpdate, block, unblock, update };
 };

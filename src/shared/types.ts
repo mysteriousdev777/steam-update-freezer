@@ -74,6 +74,9 @@ export type PickAcfFileResult =
   | { ok: false; reason: 'cancelled' }
   | { ok: false; reason: 'invalid-name'; fileName: string };
 
+/** Display metadata from package.json (via main), for the About screen. */
+export type AppInfo = { version: string; author: string };
+
 /** Options for the native confirmation dialog. */
 export type ConfirmOptions = {
   message: string;
@@ -82,3 +85,9 @@ export type ConfirmOptions = {
   confirmLabel?: string;
   cancelLabel?: string;
 };
+
+/** Actions that can be gated by a confirmation prompt — the keys of {@link ConfirmationSettings}. */
+export type ConfirmationKey = 'block' | 'update' | 'unblock' | 'quit';
+
+/** Persisted "ask before this action" preferences (Settings -> Confirmations). */
+export type ConfirmationSettings = Record<ConfirmationKey, boolean>;

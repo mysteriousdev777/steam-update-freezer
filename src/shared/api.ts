@@ -6,6 +6,7 @@ import type {
   AcfResult,
   AcfUpdateResult,
   AcfWriteResult,
+  AppInfo,
   InstalledGamesResult,
   PickAcfFileResult,
 } from './types';
@@ -37,8 +38,9 @@ export type FreezerApi = {
    * backup → fresh manifest, or a mapped error. Writes content, so Steam must be closed. */
   restoreManifest: (steamappsPath: string, appId: string) => Promise<AcfResult>;
 
-  /** Reports whether updates are currently unblocked, so quitting can be guarded with a confirm. */
-  reportUpdateUnblocked: (isUnblocked: boolean) => Promise<void>;
+  /** Reports whether a quit should be guarded with a confirmation — updates unblocked and the quit
+   * confirmation enabled (the renderer combines both) — so main can intercept the window close. */
+  reportQuitGuard: (isEnabled: boolean) => Promise<void>;
 
   /** Forwards a renderer-side error (an ErrorBoundary render crash, or a global/unhandled
    * rejection) to the main process, which appends it to the same on-disk log. */
@@ -56,4 +58,13 @@ export type FreezerApi = {
 
   /** Attempts to close the main window (triggers the quit confirmation guard). */
   closeWindow: () => Promise<void>;
+
+  /** Display metadata read from package.json (version + author), for the About screen. */
+  getAppInfo: () => Promise<AppInfo>;
+
+  /** Resets the main window to its default content size and re-centers it (Settings -> Window). */
+  restoreDefaultWindowSize: () => Promise<void>;
+
+  /** Opens an https URL in the OS default browser (About screen links) — never in-app. */
+  openExternal: (url: string) => Promise<void>;
 };

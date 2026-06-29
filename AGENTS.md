@@ -98,7 +98,7 @@ src/
     windowState.ts      # persist/restore main-window bounds (electron glue: app/screen/BrowserWindow)
     services/           # domain logic — plain Node, no `import 'electron'`, unit-testable
       acf.ts            #   read/parse appmanifest_<appId>.acf (via ./vdf)
-      closeGuard.ts     #   "update unblocked" flag for the quit-confirm guard (main/index.ts close handler)
+      closeGuard.ts     #   "guard quit?" flag (renderer-combined) for the quit-confirm guard (main/index.ts close handler)
       freezer.ts        #   freeze (snapshot+lock), manifest rewrite, unfreeze restore (atomic writes, backup, Steam-closed guard)
       steamApi.ts       #   public buildid + depot manifests from api.steamcmd.net
       steamLibraries.ts #   list installed games across all Steam libraries (registry + libraryfolders.vdf)
@@ -146,6 +146,8 @@ Rules:
   the alias too. Only same-directory sibling imports stay relative (`./`); **do not use `../`**.
   The alias does **not** loosen process boundaries — those stay lint-enforced (see Architecture);
   `@/main` from the renderer is an error, not a shortcut.
+- **`@assets/*` alias (`@assets/` → repo-root `assets/`):** import bundled assets from outside
+  `src/` (e.g. `@assets/icon.png`), not `../../../assets/…`. In `tsconfig.json` + renderer webpack only.
 
 All `services/` modules now exist; this is the agreed layout.
 

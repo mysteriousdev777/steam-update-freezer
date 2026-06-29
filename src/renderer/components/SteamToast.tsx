@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 import { cn } from '@/renderer/lib/cn';
 
-import appIcon from '../../../assets/metal_gamer_snowflake.png';
+import appIcon from '@assets/metal_gamer_snowflake.png';
 
 type SteamToastProps = {
   message: string;
