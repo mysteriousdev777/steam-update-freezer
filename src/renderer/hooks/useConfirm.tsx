@@ -33,6 +33,10 @@ export const ConfirmProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const resolverRef = useRef<((value: boolean) => void) | undefined>(undefined);
 
   const confirm = useCallback((opts: ConfirmOptions) => {
+    // Resolve any still-pending dialog as cancelled before replacing it, so a dialog opened over
+    // another (e.g. a quit request while an action confirm is up) never leaves a dangling promise.
+    resolverRef.current?.(false);
+
     setOptions(opts);
     setIsOpen(true);
 

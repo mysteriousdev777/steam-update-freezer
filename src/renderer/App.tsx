@@ -70,6 +70,7 @@ export const App: FC = () => {
       steamPath,
       appId,
       isManifestReadonly,
+      isReading,
       applyWriteResult: handleWriteResult,
       confirmations,
     });

@@ -47,6 +47,10 @@ export const useManifest = (steamPath: string, appId: string, target: ReadTarget
           setReadError(null);
         } else {
           setManifest(null);
+          // Read failed → read-only state is unknown again, so clear it (a refresh of the same
+          // target won't hit the steamPath/appId reset effect). Stale state would otherwise feed
+          // the quit guard a wrong "unblocked" signal.
+          setIsManifestReadonly(null);
           setReadError(result.error.message);
         }
       })

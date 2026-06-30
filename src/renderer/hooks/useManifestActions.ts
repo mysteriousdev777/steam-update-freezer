@@ -14,6 +14,9 @@ type UseManifestActionsArgs = {
   steamPath: string;
   appId: string;
   isManifestReadonly: boolean | null;
+  // True while a manifest read/refresh is in flight — gates actions so a late read can't
+  // overwrite a just-written state (see canWrite).
+  isReading: boolean;
   applyWriteResult: (result: { manifest?: AppManifest; isReadonly: boolean }) => void;
   confirmations: ConfirmationSettings;
 };
@@ -27,6 +30,7 @@ export const useManifestActions = ({
   steamPath,
   appId,
   isManifestReadonly,
+  isReading,
   applyWriteResult,
   confirmations,
 }: UseManifestActionsArgs) => {
@@ -46,7 +50,9 @@ export const useManifestActions = ({
 
   const [busyAction, setBusyAction] = useState<'lock' | 'unlock' | 'update' | null>(null);
 
-  const canWrite = Boolean(steamPath && appId) && busyAction === null;
+  // Block writes while a read/refresh is in flight: the read isn't cancelled by a write, so a
+  // late-resolving read would otherwise clobber the post-write state with a stale disk snapshot.
+  const canWrite = Boolean(steamPath && appId) && busyAction === null && !isReading;
   // Offer each toggle only when it would change the current state.
   const canBlock = canWrite && isManifestReadonly === false;
   const canUnblock = canWrite && isManifestReadonly === true;
