@@ -48,6 +48,7 @@ export const listSteamLibraries = async (): Promise<string[]> => {
  * Every installed game discovered across all libraries — one entry per `appmanifest_<appId>.acf`.
  * Reuses readManifest for the per-game fields. Sorted by name (case-insensitive). `skipped` counts
  * manifests that were present but couldn't be read/parsed, so the UI can warn the list is partial.
+ * A game found in two libraries (a stale manifest left behind by a move) resolves to the live copy.
  */
 export const listInstalledGames = async (): Promise<InstalledGamesResult> => {
   const libraries = await listSteamLibraries();
@@ -56,24 +57,43 @@ export const listInstalledGames = async (): Promise<InstalledGamesResult> => {
 
   const skipped = perLibrary.reduce((total, lib) => total + lib.skipped, 0);
 
-  // A game normally lives in one library; dedupe by appId in case a stale manifest lingers in
-  // another (keeps the first found — listSteamLibraries yields the default library first).
-  const byAppId = new Map<string, InstalledGame>();
+  // Group the scanned manifests by appId. A game normally lives in exactly one library, so each
+  // group holds one entry. A duplicate means a stale `appmanifest_<appId>.acf` lingers in another
+  // library (e.g. an interrupted "move install") — pickLiveGame resolves it to the copy whose files
+  // are actually on disk, so we never act on the dead manifest. listSteamLibraries yields the
+  // default library first, so each group keeps that order for the tie-break fallback.
+  const byAppId = new Map<string, ScannedGame[]>();
 
-  for (const game of perLibrary.flatMap(lib => lib.games)) {
-    if (!byAppId.has(game.appId)) byAppId.set(game.appId, game);
+  for (const scanned of perLibrary.flatMap(lib => lib.games)) {
+    const group = byAppId.get(scanned.game.appId);
+
+    if (group) {
+      group.push(scanned);
+    } else {
+      byAppId.set(scanned.game.appId, [scanned]);
+    }
   }
 
-  const games = [...byAppId.values()].sort((a, b) =>
-    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+  const resolved = await Promise.all(
+    [...byAppId.values()].map(group => (group.length === 1 ? group[0] : pickLiveGame(group))),
   );
+
+  const games = resolved
+    .map(scanned => scanned.game)
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 
   return { games, skipped };
 };
 
-// Reads every manifest in one library folder into InstalledGame entries, plus a count of manifests
+// A scanned manifest plus the install dir needed to resolve a cross-library appId collision to the
+// copy whose files exist. installDir stays internal to the dedupe — it never reaches the DTO.
+type ScannedGame = { game: InstalledGame; installDir: string };
+
+type ScanResult = { games: ScannedGame[]; skipped: number };
+
+// Reads every manifest in one library folder into ScannedGame entries, plus a count of manifests
 // that were present but unreadable/corrupt (surfaced as `skipped` so the caller can warn).
-const readGamesIn = async (steamappsPath: string): Promise<InstalledGamesResult> => {
+const readGamesIn = async (steamappsPath: string): Promise<ScanResult> => {
   let entries: string[];
 
   try {
@@ -90,19 +110,40 @@ const readGamesIn = async (steamappsPath: string): Promise<InstalledGamesResult>
 
       if (!result.ok) return null;
 
-      return {
+      const game: InstalledGame = {
         appId,
         name: result.manifest.name || appId,
         steamappsPath,
         buildId: result.manifest.buildId,
         isReadonly: result.isReadonly,
-      } satisfies InstalledGame;
+      };
+
+      return { game, installDir: result.manifest.installDir } satisfies ScannedGame;
     }),
   );
 
-  const games = results.filter((game): game is InstalledGame => game !== null);
+  const games = results.filter((scanned): scanned is ScannedGame => scanned !== null);
 
   return { games, skipped: results.length - games.length };
+};
+
+// Resolves a cross-library appId collision to the live copy: the one whose installed files exist at
+// `steamapps/common/<installDir>`. The stale manifest (files already moved to the other library)
+// fails this check and drops out. If none or several resolve (a corrupt installDir, or files
+// genuinely present in both), keep the first — the default library, which is listed first.
+const pickLiveGame = async (candidates: ScannedGame[]): Promise<ScannedGame> => {
+  const checked = await Promise.all(
+    candidates.map(async scanned => ((await hasInstalledFiles(scanned)) ? scanned : null)),
+  );
+
+  return checked.find((scanned): scanned is ScannedGame => scanned !== null) ?? candidates[0];
+};
+
+// True when the game's files are present in its own library (steamapps/common/<installDir>).
+const hasInstalledFiles = async ({ game, installDir }: ScannedGame): Promise<boolean> => {
+  if (installDir.length === 0) return false;
+
+  return isDirectory(join(game.steamappsPath, 'common', installDir));
 };
 
 // Parses libraryfolders.vdf → each library's `<path>/steamapps`. Tolerates a missing/corrupt file.

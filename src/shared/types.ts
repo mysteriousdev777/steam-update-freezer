@@ -11,6 +11,8 @@ export type InstalledDepot = {
 export type AppManifest = {
   appId: string;
   name: string;
+  /** Folder under the library's `steamapps/common/` where the game's files live. */
+  installDir: string;
   buildId: string;
   /** Active Steam branch: 'public' for the default branch, else the BetaKey (e.g. 'beta'). */
   branch: string;

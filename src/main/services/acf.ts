@@ -84,6 +84,7 @@ export const readManifest = async (steamappsPath: string, appId: string): Promis
 const toManifest = (appState: Record<string, unknown>): AppManifest => ({
   appId: str(appState.appid),
   name: str(appState.name),
+  installDir: str(appState.installdir),
   buildId: str(appState.buildid),
   branch: readBranch(appState),
   stateFlags: str(appState.StateFlags),
