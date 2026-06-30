@@ -3,8 +3,8 @@ import { join } from 'node:path';
 
 import type { AcfError, AcfResult, AcfUpdateResult, AcfWriteResult } from '@/shared/types';
 
-import { manifestFileName, readManifest } from '@/main/services/acf';
-import { fetchPublicBuildInfo } from '@/main/services/steamApi';
+import { manifestFileName, readBranch, readManifest } from '@/main/services/acf';
+import { fetchBuildInfo } from '@/main/services/steamApi';
 import { isSteamRunning } from '@/main/services/steamWatch';
 import { parseVdf, stringifyVdf } from '@/main/services/vdf';
 
@@ -147,9 +147,11 @@ function mapError(file: string, err: unknown): AcfError {
 }
 
 /**
- * Rewrites `appmanifest_<appId>.acf` so Steam treats the install as up to date at the
- * current public build (buildid/TargetBuildID, each installed depot's manifest, StateFlags=4,
- * AutoUpdateBehavior=1). Safety: refuses while Steam runs; on a still-genuine (writable) manifest
+ * Rewrites `appmanifest_<appId>.acf` so Steam treats the install as up to date at the current build
+ * of the *installed branch* (buildid/TargetBuildID, each installed depot's manifest, StateFlags=4,
+ * AutoUpdateBehavior=1). The branch is read from the manifest's BetaKey — 'public' by default; a beta
+ * resolves to its own build/manifests, so a beta install is never re-stamped with public data and
+ * desynced. Safety: refuses while Steam runs; on a still-genuine (writable) manifest
  * snapshots it to `.acf.bak` first, while on a frozen one preserves the existing `.bak` (and aborts
  * if it's missing or corrupt — see below); writes atomically (temp + rename, the new manifest
  * landing read-only); and re-locks read-only afterwards. Returns the fresh on-disk manifest, or a
@@ -217,19 +219,23 @@ export async function updateManifest(
     };
   }
 
-  const remote = await fetchPublicBuildInfo(appId);
+  // The installed branch ('public' by default) decides which build we fetch and apply — matching a
+  // beta install to beta, never to public. fetchBuildInfo refuses an unresolvable branch.
+  const branch = readBranch(appState);
+
+  const remote = await fetchBuildInfo(appId, branch);
 
   if (!remote.ok) return remote;
 
   const { buildId, depotManifests } = remote.info;
 
-  // Skip the rewrite (and its backup) when the manifest already claims the current public build —
+  // Skip the rewrite (and its backup) when the manifest already claims the branch's current build —
   // there's nothing to change. Re-read so the result still reflects on-disk state.
-  if (isAtPublicBuild(appState, buildId, depotManifests)) {
+  if (isAtBuild(appState, buildId, depotManifests)) {
     return withChanged(await readManifest(steamappsPath, appId), false);
   }
 
-  applyPublicBuild(appState, buildId, depotManifests);
+  applyBuild(appState, buildId, depotManifests);
 
   const backup = `${file}.bak`;
 
@@ -382,11 +388,11 @@ function withChanged(read: AcfResult, isChanged: boolean): AcfUpdateResult {
     : read;
 }
 
-// True when the manifest already claims the current public build: every field applyPublicBuild
-// would set already matches, so the rewrite is a no-op and can be skipped. Mirrors applyPublicBuild.
-// Values arrive from the VDF parser as strings (incl. big depot gids, kept lossless — see vdf.ts);
-// coerce defensively before comparing so a missing field reads as "not current".
-function isAtPublicBuild(
+// True when the manifest already claims the branch's current build: every field applyBuild would
+// set already matches, so the rewrite is a no-op and can be skipped. Mirrors applyBuild. Values
+// arrive from the VDF parser as strings (incl. big depot gids, kept lossless — see vdf.ts); coerce
+// defensively before comparing so a missing field reads as "not current".
+function isAtBuild(
   appState: Record<string, unknown>,
   buildId: string,
   depotManifests: Record<string, string>,
@@ -414,9 +420,9 @@ function isAtPublicBuild(
   return true;
 }
 
-// Rewrites the AppState fields that make Steam treat the install as current at the public
+// Rewrites the AppState fields that make Steam treat the install as current at the branch's
 // build: build ids, each installed depot's manifest, StateFlags, AutoUpdateBehavior.
-function applyPublicBuild(
+function applyBuild(
   appState: Record<string, unknown>,
   buildId: string,
   depotManifests: Record<string, string>,

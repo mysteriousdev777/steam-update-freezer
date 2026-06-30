@@ -21,6 +21,28 @@ const fail = (kind: AcfError['kind'], message: string): AcfResult => ({
   error: { kind, message },
 });
 
+// Non-empty string or undefined — for optional VDF fields.
+const nonEmpty = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.length > 0 ? value : undefined;
+
+// BetaKey out of the MountedConfig sub-block, if present.
+const betaKeyOf = (block: unknown): string | undefined =>
+  block && typeof block === 'object'
+    ? nonEmpty((block as Record<string, unknown>).BetaKey)
+    : undefined;
+
+/**
+ * The active Steam branch for an AppState, read from MountedConfig.BetaKey — the branch actually
+ * mounted on disk, which is what a freeze/update must match. Verified against real manifests: a beta
+ * install carries BetaKey here; a default-branch install has none (MountedConfig holds only
+ * `language`), so absent ⇒ the default branch, which the steamcmd API names 'public'. We deliberately
+ * ignore UserConfig.BetaKey (the user's *selected* branch): it diverges from the mounted branch only
+ * while a switch is selected-but-not-yet-downloaded, and there it names a branch whose files aren't on
+ * disk yet — applying it would desync the manifest.
+ */
+export const readBranch = (appState: Record<string, unknown>): string =>
+  betaKeyOf(appState.MountedConfig) ?? 'public';
+
 /**
  * Reads and parses `appmanifest_<appId>.acf` under `steamappsPath`, returning its key
  * fields or a mapped error. Pure read — never writes, so it's safe on live Steam files.
@@ -63,6 +85,7 @@ const toManifest = (appState: Record<string, unknown>): AppManifest => ({
   appId: str(appState.appid),
   name: str(appState.name),
   buildId: str(appState.buildid),
+  branch: readBranch(appState),
   stateFlags: str(appState.StateFlags),
   installedDepots: toDepots(appState.InstalledDepots),
 });

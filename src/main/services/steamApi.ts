@@ -18,19 +18,20 @@ const RETRY_DELAY_MS = 500;
 const delay = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Fetches the current public build id and per-depot manifest gids for an app from
- * api.steamcmd.net. Retries transient failures (network/timeout, HTTP 5xx/429) up to
- * MAX_ATTEMPTS with a short backoff; returns immediately on success or a permanent error
- * (HTTP 4xx, bad data). Never throws.
+ * Fetches the current build id and per-depot manifest gids for an app's `branch` from
+ * api.steamcmd.net (`branch` is 'public' for the default branch, else the BetaKey). Retries
+ * transient failures (network/timeout, HTTP 5xx/429) up to MAX_ATTEMPTS with a short backoff;
+ * returns immediately on success or a permanent error (HTTP 4xx, bad data, branch unavailable).
+ * Never throws.
  */
-export async function fetchPublicBuildInfo(appId: string): Promise<SteamBuildInfoResult> {
+export async function fetchBuildInfo(appId: string, branch: string): Promise<SteamBuildInfoResult> {
   let last: SteamBuildInfoResult = {
     ok: false,
     error: { kind: 'network', message: 'Steam API request failed.' },
   };
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const { result, isRetryable } = await attemptFetch(appId);
+    const { result, isRetryable } = await attemptFetch(appId, branch);
 
     if (result.ok || !isRetryable) return result;
 
@@ -44,7 +45,7 @@ export async function fetchPublicBuildInfo(appId: string): Promise<SteamBuildInf
 
 // A single request attempt. Network/timeout and HTTP 5xx/429 are flagged retryable; HTTP 4xx
 // and parse failures are not.
-async function attemptFetch(appId: string): Promise<Attempt> {
+async function attemptFetch(appId: string, branch: string): Promise<Attempt> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
@@ -97,12 +98,12 @@ async function attemptFetch(appId: string): Promise<Attempt> {
     };
   }
 
-  return { isRetryable: false, result: extractBuildInfo(appId, json) };
+  return { isRetryable: false, result: extractBuildInfo(appId, branch, json) };
 }
 
-// Pulls buildid (depots.branches.public.buildid) and each depot's public manifest gid
-// (depots.<id>.manifests.public.gid) out of the loosely-typed JSON.
-function extractBuildInfo(appId: string, json: unknown): SteamBuildInfoResult {
+// Pulls buildid (depots.branches.<branch>.buildid) and each depot's manifest gid
+// (depots.<id>.manifests.<branch>.gid) for the given branch out of the loosely-typed JSON.
+function extractBuildInfo(appId: string, branch: string, json: unknown): SteamBuildInfoResult {
   const depots = pick(json, 'data', appId, 'depots');
 
   if (!depots || typeof depots !== 'object') {
@@ -112,12 +113,15 @@ function extractBuildInfo(appId: string, json: unknown): SteamBuildInfoResult {
     };
   }
 
-  const buildId = pickString(depots, 'branches', 'public', 'buildid');
+  const buildId = pickString(depots, 'branches', branch, 'buildid');
 
   if (!buildId) {
     return {
       ok: false,
-      error: { kind: 'parse', message: `Steam API has no public buildid for ${appId}.` },
+      error: {
+        kind: 'parse',
+        message: `Steam API has no '${branch}' build for ${appId} (unknown or unavailable branch).`,
+      },
     };
   }
 
@@ -126,9 +130,22 @@ function extractBuildInfo(appId: string, json: unknown): SteamBuildInfoResult {
   for (const [depotId, depot] of Object.entries(depots as Record<string, unknown>)) {
     if (depotId === 'branches') continue;
 
-    const gid = pickString(depot, 'manifests', 'public', 'gid');
+    const gid = pickString(depot, 'manifests', branch, 'gid');
 
     if (gid) depotManifests[depotId] = gid;
+  }
+
+  // A branch with a build but no depot manifests is the password-protected/unavailable case
+  // (steamcmd lists the branch yet hides its gids). Without gids we'd write a buildid that doesn't
+  // match the on-disk files — refuse rather than apply a half-resolved branch.
+  if (Object.keys(depotManifests).length === 0) {
+    return {
+      ok: false,
+      error: {
+        kind: 'parse',
+        message: `Steam API exposes no manifests for the '${branch}' branch of ${appId} (it may be password-protected).`,
+      },
+    };
   }
 
   return { ok: true, info: { buildId, depotManifests } };

@@ -93,6 +93,12 @@ export const ManifestInfo: FC<ManifestInfoProps> = ({
                         </td>
                       </tr>
                       <tr className="transition-colors hover:bg-white/5">
+                        <td className="px-4 py-2">Branch</td>
+                        <td className="px-4 py-2 font-mono text-steam-muted">
+                          {manifest.branch || '—'}
+                        </td>
+                      </tr>
+                      <tr className="transition-colors hover:bg-white/5">
                         <td className="px-4 py-2">State flags</td>
                         <td className="px-4 py-2 font-mono text-steam-muted">
                           {manifest.stateFlags || '—'}

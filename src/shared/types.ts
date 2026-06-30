@@ -12,6 +12,8 @@ export type AppManifest = {
   appId: string;
   name: string;
   buildId: string;
+  /** Active Steam branch: 'public' for the default branch, else the BetaKey (e.g. 'beta'). */
+  branch: string;
   stateFlags: string;
   installedDepots: InstalledDepot[];
 };
@@ -60,9 +62,9 @@ export type AcfResult =
 export type AcfWriteResult = { ok: true; isReadonly: boolean } | { ok: false; error: AcfError };
 
 /**
- * Outcome of the manifest update (rewrite to the current public build): the fresh on-disk manifest
- * plus whether it was actually rewritten (`isChanged: false` = already at the public build, nothing
- * written), or a mapped error.
+ * Outcome of the manifest update (rewrite to the active branch's current build): the fresh on-disk
+ * manifest plus whether it was actually rewritten (`isChanged: false` = already at the branch's
+ * current build, nothing written), or a mapped error.
  */
 export type AcfUpdateResult =
   | { ok: true; isChanged: boolean; manifest: AppManifest; isReadonly: boolean }
