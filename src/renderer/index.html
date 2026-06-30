@@ -1,9 +1,25 @@
 <!doctype html>
 <html>
   <head>
+    <!--
+      CSP, defense-in-depth against renderer XSS. Via <meta>, not a response header: the packaged app
+      loads over file://, where header CSP (onHeadersReceived) never fires (electron/electron#23485).
+      Strict in prod; dev loosens script/connect-src for webpack HMR (eval + ws). style-src keeps
+      'unsafe-inline' (style-loader <style> + React inline styles). Env picked via webpackConfig.mode.
+    -->
+    <% if (webpackConfig.mode === 'production') { %>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'"
+    />
+    <% } else { %>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'"
+    />
+    <% } %>
     <meta charset="UTF-8" />
     <title>Steam Update Freezer</title>
-
   </head>
   <body>
     <div id="root"></div>
