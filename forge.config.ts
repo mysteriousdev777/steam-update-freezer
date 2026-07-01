@@ -20,6 +20,7 @@ const config: ForgeConfig = {
   makers: [
     new MakerSquirrel({
       setupIcon: './assets/favicon.ico',
+      setupExe: 'SteamUpdateFreezer-Setup.exe',
     }),
     new MakerZIP({}, ['darwin']),
     new MakerRpm({}),

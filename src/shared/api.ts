@@ -1,7 +1,7 @@
 // Shape of the bridge API exposed on `window.freezer`.
 // Imported as a *type* by both preload (which implements it) and renderer (which
 // consumes it). Type-only imports are erased at build time, so there is no runtime
-// coupling between the two bundles. See docs/DECISIONS.md (§1).
+// coupling between the two bundles.
 import type {
   AcfResult,
   AcfUpdateResult,
