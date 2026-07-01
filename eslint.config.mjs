@@ -17,9 +17,15 @@ export default tseslint.config(
   js.configs.recommended,
   tseslint.configs.recommended,
 
-  // Node-side code: main process, preload, shared, and root tooling configs.
+  // Node-side code: main process, preload, shared, root tooling configs, and scripts/.
   {
-    files: ['src/main/**/*.ts', 'src/preload/**/*.ts', 'src/shared/**/*.ts', '*.{js,mjs,ts}'],
+    files: [
+      'src/main/**/*.ts',
+      'src/preload/**/*.ts',
+      'src/shared/**/*.ts',
+      '*.{js,mjs,ts}',
+      'scripts/**/*.{js,mjs,ts}',
+    ],
     languageOptions: {
       globals: globals.node,
     },

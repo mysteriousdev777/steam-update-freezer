@@ -1,15 +1,18 @@
-import { MakerDeb } from '@electron-forge/maker-deb';
-import { MakerRpm } from '@electron-forge/maker-rpm';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';
 import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-natives';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
+import { PublisherGithub } from '@electron-forge/publisher-github';
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
 
+import { version } from './package.json';
 import { mainConfig } from './webpack.main.config';
 import { rendererConfig } from './webpack.renderer.config';
+
+// Load .env so GITHUB_TOKEN is available to the GitHub publisher at `publish` time.
+import 'dotenv/config';
 
 const config: ForgeConfig = {
   packagerConfig: {
@@ -20,12 +23,34 @@ const config: ForgeConfig = {
   makers: [
     new MakerSquirrel({
       setupIcon: './assets/favicon.ico',
-      setupExe: 'SteamUpdateFreezer-Setup.exe',
+      setupExe: `SteamUpdateFreezer-Setup-${version}.exe`,
     }),
     new MakerZIP({}, ['darwin']),
-    new MakerRpm({}),
-    new MakerDeb({}),
   ],
+  publishers: [
+    new PublisherGithub({
+      repository: {
+        owner: 'mysteriousdev777',
+        name: 'steam-update-freezer',
+      },
+      // Upload artifacts to a draft release (visible only to repo collaborators);
+      // review and hit "Publish release" on GitHub manually. Auth via GITHUB_TOKEN (.env).
+      draft: true,
+      prerelease: false,
+    }),
+  ],
+  hooks: {
+    // Publish only the installer: drop Squirrel's auto-update artifacts (.nupkg / RELEASES)
+    // from the results the publisher uploads. We ship no autoUpdater, so they're dead weight.
+    // Files stay on disk in out/make/ — this only trims what gets published.
+    postMake: async (_config, makeResults) => {
+      for (const result of makeResults) {
+        result.artifacts = result.artifacts.filter(file => file.endsWith('.exe'));
+      }
+
+      return makeResults;
+    },
+  },
   plugins: [
     new AutoUnpackNativesPlugin({}),
     new WebpackPlugin({

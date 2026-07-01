@@ -44,7 +44,7 @@ For many players, this is incredibly frustrating:
 
 ### Installation
 1. Go to the [Releases](../../releases) page on GitHub.
-2. Download the latest `SteamUpdateFreezer-Setup.exe`.
+2. Download the latest installer (`SteamUpdateFreezer-Setup-<version>.exe`).
 3. Run the installer. It uses a one-click installation process — it automatically installs to your user directory (`AppData\Local`) and launches immediately.
 
 > [!NOTE]

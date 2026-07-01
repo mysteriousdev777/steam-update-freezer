@@ -27,6 +27,7 @@ ever lands in the code**.
 - Package manager: **pnpm**.
 - `pnpm start` — run the app in dev (electron-forge); long-running watch mode. Maintainer-run — see below.
 - `pnpm run make` — package/build the app.
+- `pnpm run publish` — build + upload artifacts to a GitHub **draft** release. Maintainer-run — see below.
 - `pnpm run lint` — ESLint (flat config, `eslint.config.mjs`). Maintainer-run — see below.
 
 Gotchas:
@@ -41,6 +42,13 @@ Gotchas:
   ```
   > 🔄 **ACTION NEEDED** — restart the dev server (`pnpm start`); this change isn't live until then.
   ```
+- **Publishing (GitHub releases):** `pnpm run publish` (publisher-github in `forge.config.ts`) pushes
+  a **draft** release to `mysteriousdev777/steam-update-freezer` — visible only to collaborators until
+  the maintainer hits *Publish release*. Auth: fine-grained PAT (**Contents: Read and write**) as
+  `GITHUB_TOKEN` in `.env` (see `.env.example`). Tag is `v<version>` from `package.json` — bump it
+  before each publish or the tag collides. `hooks.postMake` filters uploads to `.exe` only (no
+  `autoUpdater` shipped, so Squirrel's `.nupkg`/`RELEASES` build locally but aren't published); the
+  installer name carries the version (`SteamUpdateFreezer-Setup-<version>.exe`).
 - **No elevation is requested** (dev or prod): Electron runs `asInvoker` (no execution-level
   manifest in `forge.config.ts`) — no UAC prompt. Writes to Steam files normally just work, as
   Steam's install folder is user-writable (it self-updates without admin). On `EPERM`/`EACCES`
@@ -58,6 +66,7 @@ command and let the maintainer run it.
 | Git           | `git status` / `add` / `commit` / `diff` … | Create/edit files only; leave all VCS to the maintainer — unless a task explicitly asks for git work. |
 | Dependencies  | `pnpm add` / `install` / `remove`          | Hand over the exact command to run.                                                           |
 | Dev server    | `pnpm start`                               | The maintainer keeps it running and verifies the app (watch mode). Renderer hot-reloads; flag any non-renderer change (main / preload / build config) with a bold 🔄 callout so they restart it. |
+| Publish       | `pnpm run publish`                         | Uploads a real GitHub release — maintainer-only. Edit `forge.config.ts` if publish config changes; hand over the command to run. |
 | Type checking | `tsc` / `pnpm exec tsc --noEmit`           | Write correctly-typed code; the maintainer checks types in the IDE.                           |
 | Linting       | `pnpm run lint` / `eslint`                 | Follow the configured rules; the maintainer lints in the IDE.                                 |
 | Tests         | any test runner (vitest / jest / …)        | There are none — don't add one or write test files; the maintainer verifies manually by running the app. |
