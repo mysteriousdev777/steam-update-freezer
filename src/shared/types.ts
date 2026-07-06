@@ -114,3 +114,35 @@ export type GithubRelease = {
 export type GithubReleaseResult =
   | { ok: true; release: GithubRelease }
   | { ok: false; error: AcfError };
+
+/** A crypto donation wallet shown in the About tab's DonateBlock. */
+export type CryptoWallet = {
+  /** Stable identifier (e.g. "evm", "tron") — used as the React key; never displayed. */
+  id: string;
+  /** Display name shown as the row label (e.g. "EVM", "Bitcoin"). */
+  name: string;
+  /** Networks/tokens the address accepts, shown as the row caption. */
+  network: string;
+  /** The full wallet address, copied verbatim to the clipboard. */
+  address: string;
+};
+
+/**
+ * Remote visibility flags for the donation targets (see main/services/donateConfig). The targets
+ * themselves are baked into the app; the remote only toggles what shows, so a payment method can be
+ * hidden without an app update.
+ */
+export type DonateFlags = {
+  kofi: boolean;
+  /** Baked-in wallet ids (DONATE_DATA) to show; a wallet renders only if its id is listed here. */
+  wallets: string[];
+};
+
+/**
+ * Effective config the DonateBlock renders — baked-in targets after the flags are applied:
+ * `kofiUrl: null` hides the Ko-fi button, empty `wallets` hides the crypto list, both hide the block.
+ */
+export type DonateConfig = {
+  kofiUrl: string | null;
+  wallets: CryptoWallet[];
+};

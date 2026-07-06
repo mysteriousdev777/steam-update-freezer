@@ -9,6 +9,7 @@ import type {
   AnalyticsEvent,
   AnalyticsProps,
   AppInfo,
+  DonateFlags,
   GithubReleaseResult,
   InstalledGamesResult,
   PickAcfFileResult,
@@ -68,11 +69,20 @@ export type FreezerApi = {
   /** Fetches the latest release info from GitHub API. This bypasses renderer CSP. */
   getLatestRelease: () => Promise<GithubReleaseResult>;
 
+  /** Fetches the remote donation flags via main (bypasses renderer CSP), toggling which baked-in
+   * targets show — so a payment method can be hidden without an app update. Null on network/parse
+   * failure → renderer falls back to cached flags / all-visible default. */
+  getDonateFlags: () => Promise<DonateFlags | null>;
+
   /** Resets the main window to its default content size and re-centers it (Settings -> Window). */
   restoreDefaultWindowSize: () => Promise<void>;
 
   /** Opens an https URL in the OS default browser (About screen links) — never in-app. */
   openExternal: (url: string) => Promise<void>;
+
+  /** Copies text to the OS clipboard via main (donation wallet addresses). Routed through main
+   * so it works in the packaged file:// build, not just the dev server's secure context. */
+  copyToClipboard: (text: string) => Promise<void>;
 
   /** Sends an anonymous analytics event to Aptabase via main. No-op in unofficial builds (no key);
    * the renderer also gates on the user's opt-out (Settings -> Privacy) before calling. */

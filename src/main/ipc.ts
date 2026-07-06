@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, shell } from 'electron';
 
 import { dirname } from 'node:path';
 
@@ -6,6 +6,7 @@ import type { AnalyticsEvent, AnalyticsProps, AppInfo, PickAcfFileResult } from 
 
 import { parseManifestAppId, readManifest } from '@/main/services/acf';
 import { setQuitGuardEnabled } from '@/main/services/closeGuard';
+import { fetchDonateFlags } from '@/main/services/donateConfig';
 import { freezeManifest, restoreManifest, updateManifest } from '@/main/services/freezer';
 import { listInstalledGames } from '@/main/services/steamLibraries';
 import { getLatestRelease } from '@/main/services/update';
@@ -105,6 +106,10 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('getLatestRelease', () => getLatestRelease());
 
+  // Remote donation visibility flags, so a payment method can be hidden without an app update (the
+  // targets themselves are baked in). Fetched here (bypasses renderer CSP); null on failure → fallback.
+  ipcMain.handle('getDonateFlags', () => fetchDonateFlags());
+
   // Settings -> Window -> Restore default window: un-maximize, reset to the default content size,
   // and re-center — a recovery reset of both size and position (e.g. window stuck off-screen).
   ipcMain.handle('restoreDefaultWindowSize', event => {
@@ -124,6 +129,12 @@ export function registerIpcHandlers(): void {
     if (!/^https:\/\//.test(url)) return;
 
     return shell.openExternal(url);
+  });
+
+  // Copies text (donation wallet addresses) to the OS clipboard. In main so the packaged
+  // file:// renderer — where navigator.clipboard isn't a secure context — can still copy.
+  ipcMain.handle('copyToClipboard', (_event, text: string) => {
+    clipboard.writeText(text);
   });
 
   // Analytics: forwards a renderer event to Aptabase. The renderer only calls this when the user

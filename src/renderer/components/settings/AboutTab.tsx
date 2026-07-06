@@ -3,6 +3,7 @@ import { type FC } from 'react';
 import { Code2 } from 'lucide-react';
 
 import { AppButton } from '@/renderer/components/AppButton';
+import { DonateBlock } from '@/renderer/components/settings/DonateBlock';
 
 import { useAppInfo } from '@/renderer/hooks/useAppInfo';
 import { useOpenExternal } from '@/renderer/hooks/useOpenExternal';
@@ -39,6 +40,8 @@ export const AboutTab: FC = () => {
           GitHub
         </AppButton>
       </div>
+
+      <DonateBlock />
     </div>
   );
 };
