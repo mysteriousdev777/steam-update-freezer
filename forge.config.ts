@@ -59,6 +59,9 @@ const config: ForgeConfig = {
     new AutoUnpackNativesPlugin({}),
     new WebpackPlugin({
       mainConfig,
+      // Disable Forge's default dev CSP header so <meta> is the sole CSP source; else it AND-combines
+      // and its `default-src 'self'` blocks whatever <meta> adds. '' respected via `??`.
+      devContentSecurityPolicy: '',
       renderer: {
         config: rendererConfig,
         entryPoints: [
