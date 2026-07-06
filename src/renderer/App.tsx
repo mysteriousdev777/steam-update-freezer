@@ -20,6 +20,7 @@ import { useQuitGuard } from '@/renderer/hooks/useQuitGuard';
 import { useSteamTarget } from '@/renderer/hooks/useSteamTarget';
 import { useTelemetrySettings } from '@/renderer/hooks/useTelemetrySettings';
 import { useTrackAppOpen } from '@/renderer/hooks/useTrackAppOpen';
+import { useUpdateCheckSettings } from '@/renderer/hooks/useUpdateCheckSettings';
 
 import { cn } from '@/renderer/lib/cn';
 
@@ -31,6 +32,7 @@ export const App: FC = () => {
   // the Settings view is open — App stays mounted across the view swap.
   const { confirmations, setConfirmation } = useConfirmationSettings();
   const { isTelemetryEnabled, setTelemetryEnabled } = useTelemetrySettings();
+  const { isUpdateCheckEnabled, setUpdateCheckEnabled } = useUpdateCheckSettings();
 
   useTrackAppOpen();
 
@@ -85,7 +87,10 @@ export const App: FC = () => {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-steam-bg text-steam-text">
-      <TitleBar onOpenSettings={() => setView('settings')} />
+      <TitleBar
+        onOpenSettings={() => setView('settings')}
+        isUpdateCheckEnabled={isUpdateCheckEnabled}
+      />
       {view === 'settings' ? (
         <SettingsScreen
           onBack={() => setView('main')}
@@ -93,6 +98,8 @@ export const App: FC = () => {
           setConfirmation={setConfirmation}
           isTelemetryEnabled={isTelemetryEnabled}
           setTelemetryEnabled={setTelemetryEnabled}
+          isUpdateCheckEnabled={isUpdateCheckEnabled}
+          setUpdateCheckEnabled={setUpdateCheckEnabled}
         />
       ) : (
         <main className="flex-1 overflow-y-auto flex flex-col gap-4 p-6">

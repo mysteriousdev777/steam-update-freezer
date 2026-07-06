@@ -4,12 +4,14 @@ import { Minus, Settings, Snowflake, X } from 'lucide-react';
 
 import { AppButton } from '@/renderer/components/AppButton';
 import { QuickGuide } from '@/renderer/components/QuickGuide';
+import { UpdateBadge } from '@/renderer/components/UpdateBadge';
 
 type TitleBarProps = {
   onOpenSettings: () => void;
+  isUpdateCheckEnabled: boolean;
 };
 
-export const TitleBar: FC<TitleBarProps> = ({ onOpenSettings }) => {
+export const TitleBar: FC<TitleBarProps> = ({ onOpenSettings, isUpdateCheckEnabled }) => {
   return (
     <header className="relative z-30 bg-steam-bar px-4 py-2 text-sm font-semibold tracking-wide flex items-center justify-between [app-region:drag] select-none">
       <div className="flex items-center gap-2">
@@ -17,6 +19,7 @@ export const TitleBar: FC<TitleBarProps> = ({ onOpenSettings }) => {
         <span className="text-white/80">Steam Update Freezer</span>
       </div>
       <div className="flex items-center gap-1 [app-region:no-drag]">
+        <UpdateBadge isEnabled={isUpdateCheckEnabled} />
         <QuickGuide />
         <AppButton
           icon={Settings}

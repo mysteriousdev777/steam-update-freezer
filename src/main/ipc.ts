@@ -8,6 +8,7 @@ import { parseManifestAppId, readManifest } from '@/main/services/acf';
 import { setQuitGuardEnabled } from '@/main/services/closeGuard';
 import { freezeManifest, restoreManifest, updateManifest } from '@/main/services/freezer';
 import { listInstalledGames } from '@/main/services/steamLibraries';
+import { getLatestRelease } from '@/main/services/update';
 
 import { trackEvent } from '@/main/analytics';
 import { logToFile } from '@/main/logger';
@@ -101,6 +102,8 @@ export function registerIpcHandlers(): void {
       author: packageJson.author,
     }),
   );
+
+  ipcMain.handle('getLatestRelease', () => getLatestRelease());
 
   // Settings -> Window -> Restore default window: un-maximize, reset to the default content size,
   // and re-center — a recovery reset of both size and position (e.g. window stuck off-screen).

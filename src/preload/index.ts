@@ -30,6 +30,7 @@ const api: FreezerApi = {
   minimizeWindow: () => ipcRenderer.invoke('minimizeWindow'),
   closeWindow: () => ipcRenderer.invoke('closeWindow'),
   getAppInfo: () => ipcRenderer.invoke('getAppInfo'),
+  getLatestRelease: () => ipcRenderer.invoke('getLatestRelease'),
   restoreDefaultWindowSize: () => ipcRenderer.invoke('restoreDefaultWindowSize'),
   openExternal: url => ipcRenderer.invoke('openExternal', url),
   trackEvent: (eventName, props) => ipcRenderer.invoke('trackEvent', eventName, props),

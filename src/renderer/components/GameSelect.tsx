@@ -7,6 +7,8 @@ import type { InstalledGame } from '@/shared/types';
 
 import { AppButton } from '@/renderer/components/AppButton';
 
+import { useOutsideClick } from '@/renderer/hooks/useOutsideClick';
+
 import { cn } from '@/renderer/lib/cn';
 
 type GameSelectProps = {
@@ -65,18 +67,7 @@ export const GameSelect: FC<GameSelectProps> = ({
 
   const selectedGame = games.find(game => game.appId === selectedAppId);
 
-  // Close on outside click.
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const onPointerDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setIsOpen(false);
-    };
-
-    document.addEventListener('mousedown', onPointerDown);
-
-    return () => document.removeEventListener('mousedown', onPointerDown);
-  }, [isOpen]);
+  useOutsideClick(containerRef, isOpen, () => setIsOpen(false));
 
   // Focus the search field on open; clear the query on close (covers every close path:
   // pick, Escape, outside click, and the trigger toggle).

@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState, type FC } from 'react';
+import { useRef, useState, type FC } from 'react';
 
 import { CircleHelp, Info } from 'lucide-react';
 
 import { AppButton } from '@/renderer/components/AppButton';
+
+import { useOutsideClick } from '@/renderer/hooks/useOutsideClick';
 
 import { cn } from '@/renderer/lib/cn';
 
@@ -10,19 +12,7 @@ export const QuickGuide: FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+  useOutsideClick(popoverRef, isOpen, () => setIsOpen(false));
 
   return (
     <div className="relative" ref={popoverRef}>

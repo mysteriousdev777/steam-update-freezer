@@ -16,6 +16,8 @@ type SettingsScreenProps = {
   setConfirmation: (key: ConfirmationKey, isEnabled: boolean) => void;
   isTelemetryEnabled: boolean;
   setTelemetryEnabled: (isEnabled: boolean) => void;
+  isUpdateCheckEnabled: boolean;
+  setUpdateCheckEnabled: (isEnabled: boolean) => void;
 };
 
 type SettingsTabKey = 'settings' | 'about';
@@ -33,6 +35,8 @@ export const SettingsScreen: FC<SettingsScreenProps> = ({
   setConfirmation,
   isTelemetryEnabled,
   setTelemetryEnabled,
+  isUpdateCheckEnabled,
+  setUpdateCheckEnabled,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTabKey>('settings');
   const activeLabel = TABS.find(tab => tab.key === activeTab)?.label ?? '';
@@ -79,6 +83,8 @@ export const SettingsScreen: FC<SettingsScreenProps> = ({
             setConfirmation={setConfirmation}
             isTelemetryEnabled={isTelemetryEnabled}
             setTelemetryEnabled={setTelemetryEnabled}
+            isUpdateCheckEnabled={isUpdateCheckEnabled}
+            setUpdateCheckEnabled={setUpdateCheckEnabled}
           />
         ) : (
           <AboutTab />

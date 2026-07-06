@@ -94,3 +94,15 @@ export const getStoredTelemetryEnabled = (): boolean => storage.read(TELEMETRY_K
 /** Persists the analytics opt-out preference. */
 export const setStoredTelemetryEnabled = (isEnabled: boolean): void =>
   storage.write(TELEMETRY_KEY, String(isEnabled));
+
+// Update-check preference (Settings -> Updates). Stored as the stringified boolean; defaults on, so
+// only an explicit 'false' disables the on-launch GitHub release check (useUpdateCheck).
+const UPDATE_CHECK_KEY = 'freezer.updateCheckEnabled';
+
+/** Whether the on-launch update check is enabled (default true; only explicit opt-out turns it off). */
+export const getStoredUpdateCheckEnabled = (): boolean =>
+  storage.read(UPDATE_CHECK_KEY) !== 'false';
+
+/** Persists the update-check preference. */
+export const setStoredUpdateCheckEnabled = (isEnabled: boolean): void =>
+  storage.write(UPDATE_CHECK_KEY, String(isEnabled));

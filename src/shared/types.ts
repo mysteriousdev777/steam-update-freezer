@@ -103,3 +103,14 @@ export type AnalyticsEvent = 'app_opened' | 'manifest_updated';
 
 /** Custom properties attached to an analytics event (Aptabase accepts string/number/boolean). */
 export type AnalyticsProps = Record<string, string | number | boolean>;
+
+/** Minimal fields required from a GitHub API release response to check for updates. */
+export type GithubRelease = {
+  tag_name: string;
+  html_url: string;
+};
+
+/** Outcome of fetching the latest GitHub release: the release info, or a mapped error. */
+export type GithubReleaseResult =
+  | { ok: true; release: GithubRelease }
+  | { ok: false; error: AcfError };

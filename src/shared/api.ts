@@ -9,6 +9,7 @@ import type {
   AnalyticsEvent,
   AnalyticsProps,
   AppInfo,
+  GithubReleaseResult,
   InstalledGamesResult,
   PickAcfFileResult,
 } from '@/shared/types';
@@ -63,6 +64,9 @@ export type FreezerApi = {
 
   /** Display metadata read from package.json (version + author), for the About screen. */
   getAppInfo: () => Promise<AppInfo>;
+
+  /** Fetches the latest release info from GitHub API. This bypasses renderer CSP. */
+  getLatestRelease: () => Promise<GithubReleaseResult>;
 
   /** Resets the main window to its default content size and re-centers it (Settings -> Window). */
   restoreDefaultWindowSize: () => Promise<void>;

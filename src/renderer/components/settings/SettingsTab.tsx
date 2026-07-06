@@ -17,6 +17,8 @@ type SettingsTabProps = {
   setConfirmation: (key: ConfirmationKey, isEnabled: boolean) => void;
   isTelemetryEnabled: boolean;
   setTelemetryEnabled: (isEnabled: boolean) => void;
+  isUpdateCheckEnabled: boolean;
+  setUpdateCheckEnabled: (isEnabled: boolean) => void;
 };
 
 // The toggles persist in localStorage (via App) and gate each action's confirm dialog:
@@ -43,6 +45,8 @@ export const SettingsTab: FC<SettingsTabProps> = ({
   setConfirmation,
   isTelemetryEnabled,
   setTelemetryEnabled,
+  isUpdateCheckEnabled,
+  setUpdateCheckEnabled,
 }) => {
   const { restoreDefaultWindowSize, isBusy } = useRestoreDefaultWindowSize();
   const openExternal = useOpenExternal();
@@ -64,6 +68,20 @@ export const SettingsTab: FC<SettingsTabProps> = ({
               />
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <SectionHeading>Updates</SectionHeading>
+        <div className="flex flex-col divide-y divide-white/5 rounded border border-white/5 bg-black/20 px-4">
+          <div className="flex items-center justify-between gap-4 py-3">
+            <span className="text-sm text-steam-text">Automatically check for updates</span>
+            <AppSwitch
+              isChecked={isUpdateCheckEnabled}
+              onCheckedChange={setUpdateCheckEnabled}
+              aria-label="Automatically check for updates"
+            />
+          </div>
         </div>
       </section>
 
