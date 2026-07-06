@@ -24,6 +24,10 @@ const config: ForgeConfig = {
     new MakerSquirrel({
       setupIcon: './assets/favicon.ico',
       setupExe: `SteamUpdateFreezer-Setup-${version}.exe`,
+      // "Installed apps" entry icon; without it Squirrel falls back to the
+      // default Electron icon. HEAD tracks the default branch across renames.
+      iconUrl:
+        'https://raw.githubusercontent.com/mysteriousdev777/steam-update-freezer/HEAD/assets/favicon.ico',
     }),
     new MakerZIP({}, ['darwin']),
   ],
