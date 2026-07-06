@@ -1,7 +1,7 @@
 {
   "name": "steam-update-freezer",
   "productName": "Steam Update Freezer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Utility to freeze Steam game versions and prevent forced updates.",
   "author": "mysteriousdev777",
   "main": ".webpack/main",
