@@ -2,7 +2,7 @@
 
 # ❄️ Steam Update Freezer
 
-*A simple, easy-to-use Windows utility to freeze your Steam game versions and prevent forced updates.*
+*A simple, easy-to-use Windows utility to block Steam game updates.*
 
 <br />
 
@@ -61,6 +61,28 @@ For many players, this is incredibly frustrating:
 4. **Click "Block updates".** Your game is now safely frozen. You can launch Steam and play your game normally while staying online.
 5. **When a patch drops later:** Close Steam again, open the app, and click **"Update manifest"**. This syncs your local file with the latest Steam data, tricking Steam into thinking the update is already installed.
 
+## How it works
+
+At its core, the app works through two actions — **Block updates** and **Update manifest** — with **Unblock updates** to reverse them whenever you want.
+
+**Block updates (freeze)** — lock the version you have right now
+- Backs up your genuine manifest next to it (`.acf.bak`), then sets the `.acf` to **read-only**.
+- Nothing *inside* the file changes — Steam simply can't rewrite it, so it can't start a download.
+
+**Update manifest (fake an update)** — for when a new patch drops and Steam won't let you launch the game until you update
+- Looks up your game's latest build from a public online API.
+- Rewrites a few specific fields in the `.acf` so it *claims* to be that build, without downloading anything — your actual game files (and mods) stay exactly as they are:
+  - `buildid` and `TargetBuildID` → the new build number
+  - each installed depot's `manifest` ID (under `InstalledDepots`) → the latest content IDs
+  - `StateFlags` → `4` (fully installed) and `AutoUpdateBehavior` → `1`
+- Re-locks the file. Steam now sees you as up to date at the newest build, so **Update** turns back into **Play** and you launch immediately, still online.
+
+**Unblock updates (restore)** — return to the original state
+- Restores your original manifest from the backup and clears the read-only lock, so Steam downloads and updates the game the usual way again.
+
+> [!TIP]
+> **Deep dive:** for the exact state machine, safety guards, and file-write rules behind every action, see [Application Flows](docs/FLOWS.md).
+
 ## FAQ
 
 **Q: Can my Steam account get banned or flagged by anti-cheat systems (VAC, EAC, BattlEye)?**  
@@ -79,6 +101,12 @@ This utility relies on a workaround that is not officially supported by Valve. P
 *This project is an independent, open-source community tool. It is not affiliated with, endorsed by, or in any way officially connected to Valve Corporation or Steam.*
 
 *This utility is provided "as is". It is designed to be safe and creates automatic backups, but please use it responsibly.*
+
+## Acknowledgments
+
+This app relies on the excellent, community-run [SteamCMD API](https://www.steamcmd.net/) to look up each game's actual metadata — by far the most convenient way to get it.
+
+A huge thank-you to its maintainers for keeping such a reliable, free resource available to the community. 🙏
 
 ## Privacy & Analytics
 
